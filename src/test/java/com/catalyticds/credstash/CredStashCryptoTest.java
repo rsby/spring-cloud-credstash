@@ -1,4 +1,4 @@
-package com.jessecoyle;
+package com.catalyticds.credstash;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -11,7 +11,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 /**
- * Created by jcoyle on 2/1/16.
+ * @author jcoyle on 2/1/16.
  */
 @RunWith(Parameterized.class)
 public abstract class CredStashCryptoTest {
@@ -19,7 +19,6 @@ public abstract class CredStashCryptoTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {
-                        "Simple",
                         "0000000000000000000000000000000000000000000000000000000000000000",
                         "0000000000000000000000000000000000000000000000000000000000000000",
                         "AAAAAA==", "Uw+K+w==", "AA7855E13839DD767CD5DA7C1FF5036540C9264B7A803029315E55375287B4AF"
@@ -33,7 +32,7 @@ public abstract class CredStashCryptoTest {
     private String decrypted;
     private String digest;
 
-    public CredStashCryptoTest(String name, String key, String digestKey, String decrypted, String encrypted, String digest) {
+    CredStashCryptoTest(String key, String digestKey, String decrypted, String encrypted, String digest) {
         this.key = key;
         this.digestKey = digestKey;
         this.decrypted = decrypted;
@@ -55,19 +54,6 @@ public abstract class CredStashCryptoTest {
         byte[] actualDecrypted = crypto.decrypt(keyBytes, encryptedbytes);
 
         assertThat("Decrypted: " + javax.xml.bind.DatatypeConverter.printBase64Binary(actualDecrypted), actualDecrypted, equalTo(decryptedBytes));
-    }
-
-    @Test
-    public void testEncrypt() throws Exception {
-        byte[] keyBytes = javax.xml.bind.DatatypeConverter.parseHexBinary(key);
-        byte[] decryptedBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(decrypted);
-        byte[] encryptedbytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(encrypted);
-
-        CredStashCrypto crypto = getCryptoImplementation();
-
-        byte[] actualEncrypted = crypto.encrypt(keyBytes, decryptedBytes);
-
-        assertThat("Encrypted: " + javax.xml.bind.DatatypeConverter.printBase64Binary(actualEncrypted), actualEncrypted, equalTo(encryptedbytes));
     }
 
     @Test
