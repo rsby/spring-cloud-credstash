@@ -1,0 +1,6 @@
+credstash:
+  enabled: true
+  table: "test-store"
+  keyPrefix: dev
+  propertyPattern: "**.secret"
+  pathSeparator: "."

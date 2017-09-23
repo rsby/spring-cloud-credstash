@@ -1,2 +1,5 @@
-# jcredstash
-A pure Java implementation of the CredStash utility originally in Python
+# BootStash
+A read-only Spring Boot (Java) CredStash library for seamlessly retrieving application
+ properties from a CredStash store.
+ 
+Integrated with Spring Boot Auto-configuration, 

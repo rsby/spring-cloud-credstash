@@ -1,0 +1,47 @@
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+jar {
+    baseName = 'com.catalyticds'
+    version =  '0.1.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+description = """SpringStash"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+
+    // Spring Core, Boot AutoConfigure, and Spring Cloud
+    compile 'org.springframework:spring-core:1.5.7.RELEASE'
+    compile 'org.springframework.boot:spring-boot-autoconfigure:1.5.7.RELEASE'
+    compile 'org.springframework.cloud:spring-cloud-context:1.2.3.RELEASE'
+
+    // AWS KMS, DynamoDB, and BouncyCastle Crypto
+    compile 'com.amazonaws:aws-java-sdk-kms:1.11.200'
+    compile 'com.amazonaws:aws-java-sdk-dynamodb:1.11.200'
+    compile 'org.bouncycastle:bcprov-jdk15on:1.58'
+
+    // Test
+    testCompile 'org.springframework.boot:spring-boot-starter-test:1.5.7.RELEASE'
+    testCompile("org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE") {
+        exclude module: "spring-boot-starter-tomcat"
+    }
+    testCompile("org.springframework.boot:spring-boot-starter-jetty:1.5.7.RELEASE")
+    testCompile("junit:junit")
+    testCompile 'org.hamcrest:hamcrest-all:1.3'
+
+}

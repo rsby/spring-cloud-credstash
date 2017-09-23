@@ -1,7 +1,7 @@
-package com.jessecoyle;
+package com.catalyticds.credstash;
 
 /**
- * Created by jcoyle on 2/1/16.
+ * @author jcoyle on 2/1/16.
  */
 public interface CredStashCrypto {
 
@@ -15,8 +15,6 @@ public interface CredStashCrypto {
     byte[] INITIALIZATION_VECTOR = new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
 
     byte[] decrypt(byte[] key, byte[] contents);
-
-    byte[] encrypt(byte[] key, byte[] contents);
 
     byte[] digest(byte[] keyBytes, byte[] contents);
 }
