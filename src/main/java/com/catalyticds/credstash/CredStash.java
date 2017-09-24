@@ -13,7 +13,7 @@ import java.util.*;
  * @author jcoyle created on 2/1/16.
  * @author reesbyars refactored on 9/20/17.
  */
-class CredStash {
+public class CredStash {
     
     private final AmazonDynamoDB amazonDynamoDBClient;
     private final AWSKMS awsKmsClient;
@@ -25,7 +25,7 @@ class CredStash {
      * @param awsKmsClient AWS SDK client for KMS
      * @param tableName the dynamo table name (likely "credential-store")
      */
-    CredStash(
+    public CredStash(
             AmazonDynamoDB amazonDynamoDBClient,
             AWSKMS awsKmsClient,
             CredStashCrypto credStashCrypto,
@@ -42,7 +42,7 @@ class CredStash {
      * @param secretName the name of the secret to get
      * @return unencrypted secret
      */
-    Optional<String> getSecret(String secretName)  {
+    public Optional<String> getSecret(String secretName)  {
         return getSecret(secretName, null, null);
     }
 
@@ -53,7 +53,7 @@ class CredStash {
      * @param context encryption context key/value pairs associated with the credential in the form of "key=value"
      * @return unencrypted secret
      */
-    Optional<String> getSecret(String secretName, Map<String, String> context)  {
+    public Optional<String> getSecret(String secretName, Map<String, String> context)  {
         return getSecret(secretName, context, null);
     }
 
@@ -65,7 +65,7 @@ class CredStash {
      * @param version a particular version string to lookup (null for latest version)
      * @return unencrypted secret
      */
-    Optional<String> getSecret(String secretName, Map<String, String> context, String version)  {
+    public Optional<String> getSecret(String secretName, Map<String, String> context, String version)  {
         // First find the relevant rows from the credstash table
         StoredSecret encrypted = version == null ?
                 readHighestVersionDynamoItem(tableName, secretName) :
@@ -76,7 +76,7 @@ class CredStash {
         return getSecret(encrypted, context);
     }
 
-    Optional<String> getSecret(StoredSecret encrypted, Map<String, String> context)  {
+    public Optional<String> getSecret(StoredSecret encrypted, Map<String, String> context)  {
 
         // The secret was encrypted using AES, then the key for that encryption was encrypted with AWS KMS
         // Then both the encrypted secret and the encrypted key are stored in dynamo
@@ -93,7 +93,10 @@ class CredStash {
         byte[] encryptedContents = encrypted.getContents();
         byte[] digest = credStashCrypto.digest(hmacKeyBytes, encryptedContents);
         if (!Arrays.equals(digest, encrypted.getHmac())) {
-            throw new RuntimeException("HMAC integrity check failed");
+            throw new CredStashSignatureException(
+                    encrypted.getName(),
+                    encrypted.getVersion(),
+                    "HMAC integrity check failed");
         }
 
         // now use AES to finally decrypt the actual secret
@@ -117,7 +120,7 @@ class CredStash {
         QueryResult queryResult = amazonDynamoDBClient.query(
                 basicQueryRequest(tableName, secretName)
         );
-        if(queryResult.getCount() == 0) {
+        if (queryResult.getCount() == 0) {
             return null;
         }
         Map<String, AttributeValue> item = queryResult.getItems().get(0);

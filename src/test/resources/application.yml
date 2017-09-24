@@ -1,3 +1,4 @@
 test:
   secret: "not from credstash"
   test: "test"
+  pass: "not from credstash"

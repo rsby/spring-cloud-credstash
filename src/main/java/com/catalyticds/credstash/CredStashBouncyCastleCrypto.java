@@ -25,9 +25,7 @@ class CredStashBouncyCastleCrypto implements CredStashCrypto {
         cipher.init(false, new ParametersWithIV(new KeyParameter(key), INITIALIZATION_VECTOR));
 
         byte[] resultBytes = new byte[contents.length];
-        int contentsOffset = 0;
-        int resultOffset = 0;
-        cipher.processBytes(contents, contentsOffset, contents.length, resultBytes, resultOffset);
+        cipher.processBytes(contents, 0, contents.length, resultBytes, 0);
         return resultBytes;
     }
 

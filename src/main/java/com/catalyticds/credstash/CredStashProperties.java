@@ -11,7 +11,7 @@ class CredStashProperties {
     private Boolean enabled = false;
     private String table = "credential-store";
     private String keyPrefix = "";
-    private String propertyPattern = "*";
+    private String propertyPatterns = "**.secret,**.password,**.key";
     private String pathSeparator = ".";
 
     public Boolean getEnabled() {
@@ -38,12 +38,12 @@ class CredStashProperties {
         this.keyPrefix = keyPrefix;
     }
 
-    public String getPropertyPattern() {
-        return propertyPattern;
+    public String getPropertyPatterns() {
+        return propertyPatterns;
     }
 
-    public void setPropertyPattern(String propertyPattern) {
-        this.propertyPattern = propertyPattern;
+    public void setPropertyPatterns(String propertyPatterns) {
+        this.propertyPatterns = propertyPatterns;
     }
 
     public String getPathSeparator() {
@@ -54,4 +54,14 @@ class CredStashProperties {
         this.pathSeparator = pathSeparator;
     }
 
+    @Override
+    public String toString() {
+        return "CredStashProperties{" +
+                "enabled=" + enabled +
+                ", table='" + table + '\'' +
+                ", keyPrefix='" + keyPrefix + '\'' +
+                ", propertyPatterns='" + propertyPatterns + '\'' +
+                ", pathSeparator='" + pathSeparator + '\'' +
+                '}';
+    }
 }

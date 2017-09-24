@@ -34,9 +34,7 @@ public class CredStashBootstrapConfiguration implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        if (credStashProperties.getEnabled()) {
-            env.getPropertySources().addFirst(credStashPropertySource());
-        }
+        env.getPropertySources().addFirst(credStashPropertySource());
     }
 
     @Bean
