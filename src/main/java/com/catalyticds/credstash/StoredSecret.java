@@ -15,7 +15,7 @@ import java.util.Map;
  */
 class StoredSecret {
 
-    private Map<String, AttributeValue> item;
+    private final Map<String, AttributeValue> item;
 
     StoredSecret(Map<String, AttributeValue> item) {
         this.item = item;
@@ -47,25 +47,16 @@ class StoredSecret {
 
     private static byte[] hexAttributeValueToBytes(AttributeValue value) {
         ByteBuffer b = value.getB();
-        byte[] attr;
-
         try {
             if (b != null && b.remaining() > 0) {
                 // support for current versions of credstash
-                attr = value.getB().array();
+                return new Hex("UTF-8").decode(value.getB().array());
             } else {
                 // support for backwards compatibility
-                attr = value.getS().getBytes("UTF-8");
+                return new Hex("UTF-8").decode(value.getS().getBytes("UTF-8"));
             }
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-
-        Hex hexDecoder = new Hex("UTF-8");
-        try {
-            return hexDecoder.decode(attr);
-        } catch (DecoderException e) {
-            throw new RuntimeException(e);
+        } catch (UnsupportedEncodingException | DecoderException e) {
+            throw new CredStashAttributeEncodingException(value, "Attribute encoding exception", e);
         }
     }
 

@@ -1,6 +1,6 @@
 credstash:
   enabled: true
   table: "test-store"
-  keyPrefix: dev
-  propertyPattern: "**.secret"
+  keyPrefix: "dev"
+  propertyPatterns: "**.secret,test.pass"
   pathSeparator: "."
