@@ -15,7 +15,7 @@ class CredStashProperties extends CredStashPropertyConfig {
 
     private Boolean enabled = false;
     private String pathSeparator = ".";
-    private Map<String, CredStashPropertyConfig> properties = new LinkedHashMap<>();
+    private Map<String, CredStashPropertyConfig> more = new LinkedHashMap<>();
 
     public CredStashProperties() {
         setName("defaults");
@@ -43,16 +43,16 @@ class CredStashProperties extends CredStashPropertyConfig {
         this.pathSeparator = pathSeparator;
     }
 
-    public Map<String, CredStashPropertyConfig> getProperties() {
-        return properties;
+    public Map<String, CredStashPropertyConfig> getMore() {
+        return more;
     }
 
-    public void setProperties(Map<String, CredStashPropertyConfig> properties) {
-        this.properties = properties;
+    public void setMore(Map<String, CredStashPropertyConfig> more) {
+        this.more = more;
     }
 
     List<CredStashPropertyConfig> compileToOrderedList() {
-        List<CredStashPropertyConfig> configs = properties
+        List<CredStashPropertyConfig> configs = more
                 .entrySet()
                 .stream()
                 .map(entry -> entry.getValue().withNameAndDefaults(entry.getKey(), this))
@@ -67,7 +67,7 @@ class CredStashProperties extends CredStashPropertyConfig {
                 "enabled=" + enabled +
                 ", pathSeparator='" + pathSeparator + '\'' +
                 ", defaults=" + super.toString() +
-                ", properties=" + properties +
+                ", more=" + more +
                 '}';
     }
 }
