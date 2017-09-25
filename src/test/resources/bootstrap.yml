@@ -1,14 +1,13 @@
 credstash:
   enabled: true
   table: "test-store"
-  keyPrefix: "dev_"
-  propertyPattern: "**.secret"
-  pathSeparator: "."
+  addPrefix: "dev_"
+  matching: "**.secret"
   properties:
     pass:
-      propertyPattern: "**.pass"
+      matching: "**.pass"
     key:
-      strip: "credstash__"
-      propertyPattern: "credstash__*"
+      stripPrefix: "credstash__"
+      matching: "credstash__*"
       context:
         my-app: "key"

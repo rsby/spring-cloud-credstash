@@ -26,12 +26,12 @@ class CredStashPropertySource extends PropertySource<CredStash> {
     @Override
     public Object getProperty(String propertyName) {
         for (CredStashPropertyConfig config : propertyConfigs) {
-            if (propertyMatcher.match(config.getPropertyPattern(), propertyName)) {
+            if (propertyMatcher.match(config.getMatching(), propertyName)) {
                 String secretName = propertyName;
-                if (!StringUtils.isEmpty(config.getStrip())) {
-                    secretName = secretName.replace(config.getStrip(), "");
+                if (!StringUtils.isEmpty(config.getStripPrefix())) {
+                    secretName = secretName.replace(config.getStripPrefix(), "");
                 }
-                secretName = config.getKeyPrefix() + secretName;
+                secretName = config.getAddPrefix() + secretName;
                 return source.getSecret(config.getTable(), secretName, config.getContext(), config.getVersion())
                         .orElseThrow(() ->
                                 new CredStashPropertyMissingException(
