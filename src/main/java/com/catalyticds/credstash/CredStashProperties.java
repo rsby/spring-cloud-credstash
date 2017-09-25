@@ -2,17 +2,30 @@ package com.catalyticds.credstash;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 /**
  * @author reesbyars on 9/22/17.
  */
 @ConfigurationProperties(prefix = "credstash")
-class CredStashProperties {
+class CredStashProperties extends CredStashPropertyConfig {
 
     private Boolean enabled = false;
-    private String table = "credential-store";
-    private String keyPrefix = "";
-    private String propertyPatterns = "**.secret,**.password,**.key";
-    private String pathSeparator = ".";
+    private String pathSeparator = null;
+    private Map<String, CredStashPropertyConfig> properties = new LinkedHashMap<>();
+
+    public CredStashProperties() {
+        setName("defaults");
+        setTable("credential-store");
+        setKeyPrefix("");
+        setPropertyPattern("");
+        setVersion(null);
+        setStrip(null);
+        setContext(new LinkedHashMap<>());
+    }
 
     public Boolean getEnabled() {
         return enabled;
@@ -20,30 +33,6 @@ class CredStashProperties {
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public String getTable() {
-        return table;
-    }
-
-    public void setTable(String table) {
-        this.table = table;
-    }
-
-    public String getKeyPrefix() {
-        return keyPrefix;
-    }
-
-    public void setKeyPrefix(String keyPrefix) {
-        this.keyPrefix = keyPrefix;
-    }
-
-    public String getPropertyPatterns() {
-        return propertyPatterns;
-    }
-
-    public void setPropertyPatterns(String propertyPatterns) {
-        this.propertyPatterns = propertyPatterns;
     }
 
     public String getPathSeparator() {
@@ -54,14 +43,31 @@ class CredStashProperties {
         this.pathSeparator = pathSeparator;
     }
 
+    public Map<String, CredStashPropertyConfig> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, CredStashPropertyConfig> properties) {
+        this.properties = properties;
+    }
+
+    List<CredStashPropertyConfig> compileToOrderedList() {
+        List<CredStashPropertyConfig> configs = properties
+                .entrySet()
+                .stream()
+                .map(entry -> entry.getValue().withNameAndDefaults(entry.getKey(), this))
+                .collect(Collectors.toList());
+        configs.add(this);
+        return configs;
+    }
+
     @Override
     public String toString() {
         return "CredStashProperties{" +
                 "enabled=" + enabled +
-                ", table='" + table + '\'' +
-                ", keyPrefix='" + keyPrefix + '\'' +
-                ", propertyPatterns='" + propertyPatterns + '\'' +
                 ", pathSeparator='" + pathSeparator + '\'' +
+                ", defaults=" + super.toString() +
+                ", properties=" + properties +
                 '}';
     }
 }

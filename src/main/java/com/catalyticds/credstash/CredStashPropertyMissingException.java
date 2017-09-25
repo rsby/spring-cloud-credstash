@@ -6,23 +6,22 @@ package com.catalyticds.credstash;
 public class CredStashPropertyMissingException extends RuntimeException {
 
     private final String propertyName;
-    private final String secretName;
+    private final CredStashPropertyConfig propertyConfig;
 
     CredStashPropertyMissingException(
             String propertyName,
-            String secretName,
+            CredStashPropertyConfig propertyConfig,
             String message) {
         super(message);
         this.propertyName = propertyName;
-        this.secretName = secretName;
+        this.propertyConfig = propertyConfig;
     }
 
     public String getPropertyName() {
         return propertyName;
     }
 
-    public String getSecretName() {
-        return secretName;
+    public CredStashPropertyConfig getPropertyConfig() {
+        return propertyConfig;
     }
-
 }

@@ -41,7 +41,7 @@ public class CredStashBootstrapConfiguration implements InitializingBean {
     PropertySource credStashPropertySource() {
         return new CredStashPropertySource(
                 credStash(),
-                credStashProperties,
+                credStashProperties.compileToOrderedList(),
                 new AntPathMatcher(credStashProperties.getPathSeparator()));
     }
 
@@ -51,8 +51,7 @@ public class CredStashBootstrapConfiguration implements InitializingBean {
         return new CredStash(
                 amazonDynamoDB(),
                 awskms(),
-                credStashCrypto(),
-                credStashProperties.getTable());
+                credStashCrypto());
     }
 
     @Bean
