@@ -66,11 +66,11 @@ public class CredStashTest {
         });
 
 
-        CredStash credStash = Mockito.spy(new CredStash(dynamoDBClient, awskmsClient, new CredStashBouncyCastleCrypto(), "table"));
+        CredStash credStash = Mockito.spy(new CredStash(dynamoDBClient, awskmsClient, new CredStashBouncyCastleCrypto()));
 
-        Mockito.doReturn(Optional.of("foo")).when(credStash).getSecret(Mockito.any(StoredSecret.class), Mockito.any(Map.class));
+        Mockito.doReturn(Optional.of("foo")).when(credStash).getStoredSecret(Mockito.any(StoredSecret.class), Mockito.any(Map.class));
 
-        Optional<String> secret = credStash.getSecret("mysecret", new HashMap<>());
+        Optional<String> secret = credStash.getSecret("table", "mysecret", new HashMap<>());
 
         Mockito.verify(dynamoDBClient, VerificationModeFactory.times(1)).query(Mockito.any(QueryRequest.class));
         Assert.assertEquals("foo", secret.get());
@@ -85,10 +85,10 @@ public class CredStashTest {
             return new GetItemResult();
         });
 
-        CredStash credStash = Mockito.spy(new CredStash(dynamoDBClient, awskmsClient, new CredStashBouncyCastleCrypto(), "table"));
-        Mockito.doReturn(Optional.of("foo")).when(credStash).getSecret(Mockito.any(StoredSecret.class), Mockito.any(Map.class));
+        CredStash credStash = Mockito.spy(new CredStash(dynamoDBClient, awskmsClient, new CredStashBouncyCastleCrypto()));
+        Mockito.doReturn(Optional.of("foo")).when(credStash).getStoredSecret(Mockito.any(StoredSecret.class), Mockito.any(Map.class));
 
-        credStash.getSecret("mysecret", new HashMap<>(), padVersion(1));
+        credStash.getSecret("table", "mysecret", new HashMap<>(), padVersion(1));
 
         Mockito.verify(dynamoDBClient, VerificationModeFactory.times(1)).getItem(Mockito.any(GetItemRequest.class));
         Assert.assertEquals(getItemRequest[0].getKey().get("version").getS(), padVersion(1));

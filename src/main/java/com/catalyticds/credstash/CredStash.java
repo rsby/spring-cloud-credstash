@@ -18,54 +18,55 @@ public class CredStash {
     private final AmazonDynamoDB amazonDynamoDBClient;
     private final AWSKMS awsKmsClient;
     private final CredStashCrypto credStashCrypto;
-    private final String tableName;
 
     /**
      * @param amazonDynamoDBClient AWS SDK client for DynamoDB
      * @param awsKmsClient AWS SDK client for KMS
-     * @param tableName the dynamo table name (likely "credential-store")
+     * @param credStashCrypto the crypto used for decryption and digests
      */
     public CredStash(
             AmazonDynamoDB amazonDynamoDBClient,
             AWSKMS awsKmsClient,
-            CredStashCrypto credStashCrypto,
-            String tableName) {
+            CredStashCrypto credStashCrypto) {
         this.amazonDynamoDBClient = amazonDynamoDBClient;
         this.awsKmsClient = awsKmsClient;
         this.credStashCrypto = credStashCrypto;
-        this.tableName = tableName;
     }
 
     /**
      * Gets a secret from credstash.
      *
+     * @param tableName the dynamo table name (likely "credential-store")
      * @param secretName the name of the secret to get
      * @return unencrypted secret
      */
-    public Optional<String> getSecret(String secretName)  {
-        return getSecret(secretName, null, null);
+    public Optional<String> getSecret(String tableName, String secretName)  {
+        return getSecret(tableName, secretName, null, null);
     }
 
     /**
      * Gets a secret from credstash.
      *
+     * @param tableName the dynamo table name (likely "credential-store")
      * @param secretName the name of the secret to get
      * @param context encryption context key/value pairs associated with the credential in the form of "key=value"
      * @return unencrypted secret
      */
-    public Optional<String> getSecret(String secretName, Map<String, String> context)  {
-        return getSecret(secretName, context, null);
+    public Optional<String> getSecret(String tableName, String secretName, Map<String, String> context)  {
+        return getSecret(tableName, secretName, context, null);
     }
 
     /**
      * Gets a secret from credstash with a specified version
      *
+     * @param tableName the dynamo table name (likely "credential-store")
      * @param secretName the name of the secret to get
      * @param context encryption context key/value pairs associated with the credential in the form of "key=value"
      * @param version a particular version string to lookup (null for latest version)
      * @return unencrypted secret
      */
-    public Optional<String> getSecret(String secretName, Map<String, String> context, String version)  {
+    public Optional<String> getSecret(
+            String tableName, String secretName, Map<String, String> context, String version)  {
         // First find the relevant rows from the credstash table
         StoredSecret encrypted = version == null ?
                 readHighestVersionDynamoItem(tableName, secretName) :
@@ -73,10 +74,10 @@ public class CredStash {
         if (encrypted == null) {
             return Optional.empty();
         }
-        return getSecret(encrypted, context);
+        return getStoredSecret(encrypted, context);
     }
 
-    public Optional<String> getSecret(StoredSecret encrypted, Map<String, String> context)  {
+    Optional<String> getStoredSecret(StoredSecret encrypted, Map<String, String> context)  {
 
         // The secret was encrypted using AES, then the key for that encryption was encrypted with AWS KMS
         // Then both the encrypted secret and the encrypted key are stored in dynamo

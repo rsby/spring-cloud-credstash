@@ -24,6 +24,9 @@ public class CredStashBootstrapConfigurationTest {
     @Value("${test.pass}")
     String pass;
 
+    @Value("${test.key}")
+    String key;
+
     @Value("${test.test}")
     String test;
 
@@ -38,6 +41,7 @@ public class CredStashBootstrapConfigurationTest {
         assertEquals("test", test);
         assertEquals(MockCredStashConfiguration.credStashValue, secret);
         assertEquals(MockCredStashConfiguration.credStashValue, pass);
+        assertEquals(MockCredStashConfiguration.credStashValue, key);
     }
 
 }

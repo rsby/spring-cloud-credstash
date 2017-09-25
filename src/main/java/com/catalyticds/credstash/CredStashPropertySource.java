@@ -2,9 +2,8 @@ package com.catalyticds.credstash;
 
 import org.springframework.core.env.PropertySource;
 import org.springframework.util.PathMatcher;
+import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,39 +11,37 @@ import java.util.List;
  */
 class CredStashPropertySource extends PropertySource<CredStash> {
 
-    private final CredStashProperties properties;
+    private final List<CredStashPropertyConfig> propertyConfigs;
     private final PathMatcher propertyMatcher;
-    private final List<String> propertyPatterns = new ArrayList<>();
 
     CredStashPropertySource(
             CredStash credStash,
-            CredStashProperties properties,
+            List<CredStashPropertyConfig> propertyConfigs,
             PathMatcher propertyMatcher) {
         super("credstash", credStash);
-        this.properties = properties;
+        this.propertyConfigs = propertyConfigs;
         this.propertyMatcher = propertyMatcher;
-        Collections.addAll(propertyPatterns, properties.getPropertyPatterns().split(","));
-        if (logger.isDebugEnabled()) {
-            logger.debug("Initializing CredStash property source with ==> " + properties);
-        }
     }
 
     @Override
     public Object getProperty(String propertyName) {
-        if (properties.getEnabled()) {
-            for (String propertyPattern : propertyPatterns) {
-                if (propertyMatcher.match(propertyPattern, propertyName)) {
-                    String secretName = properties.getKeyPrefix() + propertyName;
-                    return source.getSecret(secretName)
-                            .orElseThrow(() ->
-                                    new CredStashPropertyMissingException(
-                                            propertyName,
-                                            secretName,
-                                            String.format("Property [%s] not found using key [%s]",
-                                                    propertyName,
-                                                    secretName)));
+        for (CredStashPropertyConfig config : propertyConfigs) {
+            if (propertyMatcher.match(config.getPropertyPattern(), propertyName)) {
+                String secretName = propertyName;
+                if (!StringUtils.isEmpty(config.getStrip())) {
+                    secretName = secretName.replace(config.getStrip(), "");
                 }
+                secretName = config.getKeyPrefix() + secretName;
+                return source.getSecret(config.getTable(), secretName, config.getContext(), config.getVersion())
+                        .orElseThrow(() ->
+                                new CredStashPropertyMissingException(
+                                        propertyName,
+                                        config,
+                                        String.format("Property [%s] not found using config [%s]",
+                                                propertyName,
+                                                config)));
             }
+
         }
         return null;
     }

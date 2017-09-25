@@ -2,3 +2,6 @@ test:
   secret: "not from credstash"
   test: "test"
   pass: "not from credstash"
+  key: ${credstash__test_key}
+
+credstash__test_key:

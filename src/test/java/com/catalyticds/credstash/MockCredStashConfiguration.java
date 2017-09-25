@@ -10,6 +10,8 @@ import javax.annotation.PostConstruct;
 
 import java.util.Optional;
 
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,7 +38,8 @@ public class MockCredStashConfiguration {
 
     @PostConstruct
     public void init() {
-        when(credStash().getSecret(anyString())).thenReturn(Optional.of(credStashValue));
+        when(credStash().getSecret(anyString(), anyString(), anyMapOf(String.class, String.class), anyString()))
+                .thenReturn(Optional.of(credStashValue));
     }
 
 }
