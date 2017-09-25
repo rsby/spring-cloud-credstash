@@ -14,16 +14,16 @@ import java.util.stream.Collectors;
 class CredStashProperties extends CredStashPropertyConfig {
 
     private Boolean enabled = false;
-    private String pathSeparator = null;
+    private String pathSeparator = ".";
     private Map<String, CredStashPropertyConfig> properties = new LinkedHashMap<>();
 
     public CredStashProperties() {
         setName("defaults");
         setTable("credential-store");
-        setKeyPrefix("");
-        setPropertyPattern("");
+        setAddPrefix("");
+        setMatching("");
         setVersion(null);
-        setStrip(null);
+        setStripPrefix(null);
         setContext(new LinkedHashMap<>());
     }
 

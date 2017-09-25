@@ -11,9 +11,9 @@ public class CredStashPropertyConfig {
 
     private String name;
     private String table;
-    private String keyPrefix;
-    private String strip;
-    private String propertyPattern;
+    private String addPrefix;
+    private String stripPrefix;
+    private String matching;
     private String version;
     private Map<String, String> context;
 
@@ -33,28 +33,28 @@ public class CredStashPropertyConfig {
         this.table = table;
     }
 
-    public String getKeyPrefix() {
-        return keyPrefix;
+    public String getAddPrefix() {
+        return addPrefix;
     }
 
-    public void setKeyPrefix(String keyPrefix) {
-        this.keyPrefix = keyPrefix;
+    public void setAddPrefix(String addPrefix) {
+        this.addPrefix = addPrefix;
     }
 
-    public String getStrip() {
-        return strip;
+    public String getStripPrefix() {
+        return stripPrefix;
     }
 
-    public void setStrip(String strip) {
-        this.strip = strip;
+    public void setStripPrefix(String stripPrefix) {
+        this.stripPrefix = stripPrefix;
     }
 
-    public String getPropertyPattern() {
-        return propertyPattern;
+    public String getMatching() {
+        return matching;
     }
 
-    public void setPropertyPattern(String propertyPattern) {
-        this.propertyPattern = propertyPattern;
+    public void setMatching(String matching) {
+        this.matching = matching;
     }
 
     public String getVersion() {
@@ -74,14 +74,14 @@ public class CredStashPropertyConfig {
     }
 
     public CredStashPropertyConfig withNameAndDefaults(String name, CredStashPropertyConfig defaults) {
-        if (propertyPattern == null) {
-            throw new IllegalArgumentException("propertyPattern cannot be null for CredStash property " + name);
+        if (matching == null) {
+            throw new IllegalArgumentException("matching cannot be null for CredStash property " + name);
         }
         setName(name);
         table = Objects.toString(table, defaults.getTable());
-        keyPrefix = Objects.toString(keyPrefix, defaults.getKeyPrefix());
+        addPrefix = Objects.toString(addPrefix, defaults.getAddPrefix());
         version = Objects.toString(version, defaults.getVersion());
-        strip = Objects.toString(strip, defaults.getStrip());
+        stripPrefix = Objects.toString(stripPrefix, defaults.getStripPrefix());
         context = Optional.ofNullable(context).orElse(defaults.getContext());
         return this;
     }
@@ -91,9 +91,9 @@ public class CredStashPropertyConfig {
         return "CredStashPropertyConfig{" +
                 "name='" + name + '\'' +
                 ", table='" + table + '\'' +
-                ", keyPrefix='" + keyPrefix + '\'' +
-                ", strip='" + strip + '\'' +
-                ", propertyPattern='" + propertyPattern + '\'' +
+                ", addPrefix='" + addPrefix + '\'' +
+                ", stripPrefix='" + stripPrefix + '\'' +
+                ", matching='" + matching + '\'' +
                 ", version='" + version + '\'' +
                 ", context=" + context +
                 '}';
