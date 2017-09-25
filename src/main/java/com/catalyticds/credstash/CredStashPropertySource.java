@@ -27,6 +27,9 @@ class CredStashPropertySource extends PropertySource<CredStash> {
     public Object getProperty(String propertyName) {
         for (CredStashPropertyConfig config : propertyConfigs) {
             if (propertyMatcher.match(config.getMatching(), propertyName)) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Loading from CredStash ==> " + propertyName);
+                }
                 String secretName = propertyName;
                 if (!StringUtils.isEmpty(config.getStripPrefix())) {
                     secretName = secretName.replace(config.getStripPrefix(), "");

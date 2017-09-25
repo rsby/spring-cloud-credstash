@@ -75,7 +75,7 @@ public class CredStashPropertyConfig {
 
     public CredStashPropertyConfig withNameAndDefaults(String name, CredStashPropertyConfig defaults) {
         if (matching == null) {
-            throw new IllegalArgumentException("matching cannot be null for CredStash property " + name);
+            throw new IllegalArgumentException("'matching' cannot be null for CredStash property " + name);
         }
         setName(name);
         table = Objects.toString(table, defaults.getTable());

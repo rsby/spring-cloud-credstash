@@ -3,7 +3,7 @@ credstash:
   table: "test-store"
   addPrefix: "dev_"
   matching: "**.secret"
-  properties:
+  more:
     pass:
       matching: "**.pass"
     key:
