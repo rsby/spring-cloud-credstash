@@ -13,3 +13,6 @@ credstash:
       matching: "credstash__*"
       context:
         my-app: "key"
+    test:
+      enabled: false
+      matching: "test.test"

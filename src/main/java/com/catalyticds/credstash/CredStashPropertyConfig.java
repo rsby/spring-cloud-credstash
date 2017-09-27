@@ -13,6 +13,7 @@ public class CredStashPropertyConfig {
 
     private String name;
     private String table;
+    private Boolean enabled = true;
     private String addPrefix;
     private String stripPrefix;
     private List<String> matching = new ArrayList<>();
@@ -33,6 +34,14 @@ public class CredStashPropertyConfig {
 
     public void setTable(String table) {
         this.table = table;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 
     public String getAddPrefix() {
@@ -93,6 +102,7 @@ public class CredStashPropertyConfig {
         return "CredStashPropertyConfig{" +
                 "name='" + name + '\'' +
                 ", table='" + table + '\'' +
+                ", enabled='" + enabled + '\'' +
                 ", addPrefix='" + addPrefix + '\'' +
                 ", stripPrefix='" + stripPrefix + '\'' +
                 ", matching='" + matching + '\'' +

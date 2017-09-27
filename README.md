@@ -74,15 +74,21 @@ The yaml config also supports setting "child" configs that will inherit from the
         user_service_pass:
           matching: "credstash__user.svc.db.pass"
           version: "2"
+        external_file_store_pass:
+          enabled: false
+          matching: "external.file.store.pass"
 
 In this config, most properties would be satisfied with the latest secret version in CredStash, but
 the user service DB password would still be on version 2. These "child" configs must all be part of the `more` field.
-Any field can be overridden in the child configs, except for `enabled` and `pathSeparator`, which can only be set in 
-the default config.
+Any field can be overridden in the child configs, except for `pathSeparator`, which can only be set in 
+the default config. For child configs, `enabled` defaults to true, but it can be set to false. This is useful
+if using a centralized `bootstrap.yml` across multiple micro services - child configs can be toggled on and
+off via environment variables, enabling ease of defining the `spring.datasource.password` per service in
+a centralized config and then only turning on the child config for a given service via its env args.
 
 ### All default settings
 
-    credstash.enabled:          false                   # not enabled by default
+    credstash.enabled:          false                   # not enabled by default (except for "child" configs)
     credstash.table:            "credential-store"
     credstash.add_prefix:       ""
     credstash.strip_prefix:     ""

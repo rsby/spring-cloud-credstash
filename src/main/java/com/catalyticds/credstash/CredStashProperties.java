@@ -13,26 +13,18 @@ import java.util.stream.Collectors;
 @ConfigurationProperties(prefix = "credstash")
 class CredStashProperties extends CredStashPropertyConfig {
 
-    private Boolean enabled = false;
     private String pathSeparator = ".";
     private Map<String, CredStashPropertyConfig> more = new LinkedHashMap<>();
 
     public CredStashProperties() {
         setName("defaults");
         setTable("credential-store");
+        setEnabled(false);
         setAddPrefix("");
         getMatching().add("");
         setVersion(null);
         setStripPrefix(null);
         setContext(new LinkedHashMap<>());
-    }
-
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
     }
 
     public String getPathSeparator() {
@@ -64,7 +56,6 @@ class CredStashProperties extends CredStashPropertyConfig {
     @Override
     public String toString() {
         return "CredStashProperties{" +
-                "enabled=" + enabled +
                 ", pathSeparator='" + pathSeparator + '\'' +
                 ", defaults=" + super.toString() +
                 ", more=" + more +
