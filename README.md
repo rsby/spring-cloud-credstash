@@ -14,13 +14,30 @@ in order to retrieve the property `my.client.secret`, the property must first be
 declared in a property file or environment variable, etc, even if left blank. For instance:
 
     my.client.secret: 
-    
-# How to use and configure
+ 
+# Simple use and configuration - credential store per environment or VPC
 As a Spring Cloud bootstrap component, all that is required to begin retrieving
 secrets from a CredStash store is to add this library to your Spring Boot app and
 configure the following in your `bootstrap.yml` or `application.yml`:
 
-example `bootstrap.yml`:
+    credstash:
+      enabled: true
+      table: "qa-credential-store"
+      matching:
+       - "auth.idp.client.secret"
+       - "spring.datasource.password"
+
+# Simple use and configuration - single credential store with keys for environment or VPC
+
+    credstash:
+      enabled: true
+      add_prefix:   "dev_"
+      matching:
+       - "auth.idp.client.secret"
+       - "spring.datasource.password"
+
+
+# Further use and configuration
 
     credstash:
       enabled:      true
@@ -65,11 +82,11 @@ the default config.
 
 # All default settings
 
-    credstash.enabled:          false
+    credstash.enabled:          false                   # not enabled by default
     credstash.table:            "credential-store"
     credstash.add_prefix:       ""
     credstash.strip_prefix:     ""
-    credstash.matching:         ""
-    credstash.version:          null
+    credstash.matching:         ""                      # matches none
+    credstash.version:          null                    # null resolves to "latest"
     credstash.context:          null
-    credstash.pathSeparator:    "."
+    credstash.pathSeparator:    "."                     # separator for Ant matching

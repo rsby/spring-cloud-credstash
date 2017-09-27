@@ -30,6 +30,9 @@ public class CredStashBootstrapConfigurationTest {
     @Value("${test.test}")
     String test;
 
+    @Value("${my.exact.match}")
+    String exactMatch;
+
     @Autowired
     CredStash credStash;
 
@@ -42,6 +45,7 @@ public class CredStashBootstrapConfigurationTest {
         assertEquals(MockCredStashConfiguration.credStashValue, secret);
         assertEquals(MockCredStashConfiguration.credStashValue, pass);
         assertEquals(MockCredStashConfiguration.credStashValue, key);
+        assertEquals(MockCredStashConfiguration.credStashValue, exactMatch);
     }
 
 }

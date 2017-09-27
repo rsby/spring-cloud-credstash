@@ -5,3 +5,4 @@ test:
   key: ${credstash__test_key}
 
 credstash__test_key:
+my.exact.match: "not from credstash"

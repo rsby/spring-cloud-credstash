@@ -2,7 +2,9 @@ credstash:
   enabled: true
   table: "test-store"
   addPrefix: "dev_"
-  matching: "**.secret"
+  matching:
+   - "**.secret"
+   - "my.exact.match"
   more:
     pass:
       matching: "**.pass"

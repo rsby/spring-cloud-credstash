@@ -21,7 +21,7 @@ class CredStashProperties extends CredStashPropertyConfig {
         setName("defaults");
         setTable("credential-store");
         setAddPrefix("");
-        setMatching("");
+        getMatching().add("");
         setVersion(null);
         setStripPrefix(null);
         setContext(new LinkedHashMap<>());
