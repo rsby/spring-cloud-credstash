@@ -1,5 +1,5 @@
 # Spring Cloud CredStash
-A read-only Spring Cloud CredStash library for retrieving application
+A read-only Spring Cloud library for retrieving application
  properties from a CredStash store. As opposed to a Docker/container solution, Spring Cloud CredStash
  enables full Spring property, profile and Boot integration, reducing
  the friction for per-environment and local developer configuration. This maintains
@@ -7,7 +7,7 @@ A read-only Spring Cloud CredStash library for retrieving application
   configuration management effort and boiling the Dev Ops CredStash configuration down
   to a single property or two at most.
  
-## Does it load all credentials from the CredStash store?
+### Does it load all credentials from the CredStash store?
 No. The CredStashPropertySource is not an EnumerablePropertySource, therefore it
 is used exclusively for overrides of properties declared elsewhere. So, 
 in order to retrieve the property `my.client.secret`, the property must first be
@@ -15,7 +15,7 @@ declared in a property file or environment variable, etc, even if left blank. Fo
 
     my.client.secret: 
  
-## Simple use and configuration - credential store per environment or VPC
+### Simple use and configuration - credential store per environment or VPC
 As a Spring Cloud bootstrap component, all that is required to begin retrieving
 secrets from a CredStash store is to add this library to your Spring Boot app and
 configure the following in your `bootstrap.yml` or `application.yml`:
@@ -27,7 +27,7 @@ configure the following in your `bootstrap.yml` or `application.yml`:
        - "auth.idp.client.secret"
        - "spring.datasource.password"
 
-## Simple use and configuration - single credential store with keys for environment or VPC
+### Simple use and configuration - single credential store with keys for environment or VPC
 
     credstash:
       enabled: true
@@ -37,7 +37,7 @@ configure the following in your `bootstrap.yml` or `application.yml`:
        - "spring.datasource.password"
 
 
-## Further use and configuration
+### Further use and configuration
 
     credstash:
       enabled:      true
@@ -62,7 +62,7 @@ property in different environments. Useful when using a single store across mult
 - _stripPrefix_: A string to strip from the original Spring property name when converting to a CredStash key.
 - _matching_: An Ant pattern for filtering which properties to fetch. 
 
-## Fine tuning
+### Fine tuning
 The yaml config also supports setting "child" configs that will inherit from the main settings. For instance:
 
     credstash:
@@ -80,7 +80,7 @@ the user service DB password would still be on version 2. These "child" configs 
 Any field can be overridden in the child configs, except for `enabled` and `pathSeparator`, which can only be set in 
 the default config.
 
-## All default settings
+### All default settings
 
     credstash.enabled:          false                   # not enabled by default
     credstash.table:            "credential-store"
