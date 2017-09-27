@@ -5,6 +5,7 @@ credstash:
   matching:
    - "**.secret"
    - "my.exact.match"
+   - "test.from*"
   more:
     pass:
       matching: "**.pass"

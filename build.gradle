@@ -13,7 +13,7 @@ group = 'com.catalyticds'
 version = '0.1.0'
 
 jar {
-    baseName = rootProject.name + '-' + version
+    baseName = rootProject.name
 }
 
 repositories {

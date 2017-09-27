@@ -4,13 +4,13 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.bootstrap.config.PropertySourceLocator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
 import org.springframework.util.AntPathMatcher;
 
@@ -20,29 +20,22 @@ import org.springframework.util.AntPathMatcher;
 @Configuration
 @EnableConfigurationProperties(CredStashProperties.class)
 @ConditionalOnProperty(prefix = "credstash", name = "enabled", havingValue = "true")
-public class CredStashBootstrapConfiguration implements InitializingBean {
+public class CredStashBootstrapConfiguration implements PropertySourceLocator {
 
-    private final ConfigurableEnvironment env;
     private final CredStashProperties credStashProperties;
 
     CredStashBootstrapConfiguration(
-            ConfigurableEnvironment env,
             CredStashProperties credStashProperties) {
-        this.env = env;
         this.credStashProperties = credStashProperties;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        env.getPropertySources().addFirst(credStashPropertySource());
-    }
-
     @Bean
-    PropertySource credStashPropertySource() {
+    PropertySource<CredStash> credStashPropertySource() {
         return new CredStashPropertySource(
                 credStash(),
                 credStashProperties.compileToOrderedList(),
-                new AntPathMatcher(credStashProperties.getPathSeparator()));
+                new AntPathMatcher(credStashProperties.getPathSeparator()),
+                credStashProperties.getMode());
     }
 
     @Bean
@@ -70,6 +63,11 @@ public class CredStashBootstrapConfiguration implements InitializingBean {
     @ConditionalOnMissingBean
     CredStashCrypto credStashCrypto() {
         return new CredStashBouncyCastleCrypto();
+    }
+
+    @Override
+    public PropertySource<?> locate(Environment environment) {
+        return credStashPropertySource();
     }
 
 }

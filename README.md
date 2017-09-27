@@ -9,11 +9,7 @@ A read-only Spring Cloud library for retrieving application
  
 ### Does it load all credentials from the CredStash store?
 No. The CredStashPropertySource is not an EnumerablePropertySource, therefore it
-is used exclusively for overrides of properties declared elsewhere. So, 
-in order to retrieve the property `my.client.secret`, the property must first be
-declared in a property file or environment variable, etc, even if left blank. For instance:
-
-    my.client.secret: 
+is used exclusively for overrides of properties declared or requested elsewhere. 
  
 ### Simple use and configuration - credential store per environment or VPC
 As a Spring Cloud bootstrap component, all that is required to begin retrieving
@@ -96,3 +92,12 @@ a centralized config and then only turning on the child config for a given servi
     credstash.version:          null                    # null resolves to "latest"
     credstash.context:          null
     credstash.pathSeparator:    "."                     # separator for Ant matching
+    credstash.mode:             PROD                    # can be set to AUDIT to log CredStash retrieval details
+
+### Debugging
+
+To debug issues when first configuring CredStash in an environment, `credstash.mode: AUDIT` can be set. This causes 
+two things:
+
+   1) Failure to locate a property in CredStash does not break deployment (in the default PROD mode, it does break deployment)
+   1) A list of attempted property retrievals is logged, including both successful and unsuccessful retrievals
