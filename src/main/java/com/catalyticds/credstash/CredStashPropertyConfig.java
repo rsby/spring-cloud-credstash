@@ -1,5 +1,7 @@
 package com.catalyticds.credstash;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,7 +15,7 @@ public class CredStashPropertyConfig {
     private String table;
     private String addPrefix;
     private String stripPrefix;
-    private String matching;
+    private List<String> matching = new ArrayList<>();
     private String version;
     private Map<String, String> context;
 
@@ -49,11 +51,11 @@ public class CredStashPropertyConfig {
         this.stripPrefix = stripPrefix;
     }
 
-    public String getMatching() {
+    public List<String> getMatching() {
         return matching;
     }
 
-    public void setMatching(String matching) {
+    public void setMatching(List<String> matching) {
         this.matching = matching;
     }
 
@@ -74,8 +76,8 @@ public class CredStashPropertyConfig {
     }
 
     public CredStashPropertyConfig withNameAndDefaults(String name, CredStashPropertyConfig defaults) {
-        if (matching == null) {
-            throw new IllegalArgumentException("'matching' cannot be null for CredStash property " + name);
+        if (matching == null || matching.isEmpty()) {
+            throw new IllegalArgumentException("'matching' cannot be null or empty for CredStash config " + name);
         }
         setName(name);
         table = Objects.toString(table, defaults.getTable());
