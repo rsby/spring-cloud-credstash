@@ -26,27 +26,28 @@ class CredStashPropertySource extends PropertySource<CredStash> {
     @Override
     public Object getProperty(String propertyName) {
         for (CredStashPropertyConfig config : propertyConfigs) {
-            for (String matching : config.getMatching()) {
-                if (propertyMatcher.match(matching, propertyName)) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Loading from CredStash ==> " + propertyName);
+            if (config.getEnabled()) {
+                for (String matching : config.getMatching()) {
+                    if (propertyMatcher.match(matching, propertyName)) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Loading from CredStash ==> " + propertyName);
+                        }
+                        String secretName = propertyName;
+                        if (!StringUtils.isEmpty(config.getStripPrefix())) {
+                            secretName = secretName.replace(config.getStripPrefix(), "");
+                        }
+                        secretName = config.getAddPrefix() + secretName;
+                        return source.getSecret(config.getTable(), secretName, config.getContext(), config.getVersion())
+                                .orElseThrow(() ->
+                                        new CredStashPropertyMissingException(
+                                                propertyName,
+                                                config,
+                                                String.format("Property [%s] not found using config [%s]",
+                                                        propertyName,
+                                                        config)));
                     }
-                    String secretName = propertyName;
-                    if (!StringUtils.isEmpty(config.getStripPrefix())) {
-                        secretName = secretName.replace(config.getStripPrefix(), "");
-                    }
-                    secretName = config.getAddPrefix() + secretName;
-                    return source.getSecret(config.getTable(), secretName, config.getContext(), config.getVersion())
-                            .orElseThrow(() ->
-                                    new CredStashPropertyMissingException(
-                                            propertyName,
-                                            config,
-                                            String.format("Property [%s] not found using config [%s]",
-                                                    propertyName,
-                                                    config)));
                 }
             }
-
         }
         return null;
     }
