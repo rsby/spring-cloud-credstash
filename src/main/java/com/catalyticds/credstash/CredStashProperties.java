@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 class CredStashProperties extends CredStashPropertyConfig {
 
     private String pathSeparator = ".";
+    private Mode mode = Mode.PROD;
     private Map<String, CredStashPropertyConfig> more = new LinkedHashMap<>();
 
     public CredStashProperties() {
@@ -33,6 +34,14 @@ class CredStashProperties extends CredStashPropertyConfig {
 
     public void setPathSeparator(String pathSeparator) {
         this.pathSeparator = pathSeparator;
+    }
+
+    public Mode getMode() {
+        return mode;
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode;
     }
 
     public Map<String, CredStashPropertyConfig> getMore() {
@@ -56,9 +65,13 @@ class CredStashProperties extends CredStashPropertyConfig {
     @Override
     public String toString() {
         return "CredStashProperties{" +
-                ", pathSeparator='" + pathSeparator + '\'' +
+                "pathSeparator='" + pathSeparator + '\'' +
                 ", defaults=" + super.toString() +
                 ", more=" + more +
                 '}';
+    }
+
+    public enum Mode {
+        PROD, AUDIT
     }
 }
