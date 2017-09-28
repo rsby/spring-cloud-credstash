@@ -6,6 +6,8 @@ credstash:
    - "**.secret"
    - "my.exact.match"
    - "test.from*"
+  oneToOne:
+    test.oneToOne: "one_to_one_secret_key"
   more:
     pass:
       matching: "**.pass"

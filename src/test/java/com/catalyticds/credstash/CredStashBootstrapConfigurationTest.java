@@ -45,6 +45,9 @@ public class CredStashBootstrapConfigurationTest {
     @Value("${test.fromValueNoDefault}")
     String fromValueAnnotationNoDefault;
 
+    @Value("${test.oneToOne}")
+    String oneToOne;
+
     @Autowired
     CredStash credStash;
 
@@ -61,6 +64,7 @@ public class CredStashBootstrapConfigurationTest {
         assertEquals(MockCredStashConfiguration.credStashValue, fromPropertySourceFile);
         assertEquals(MockCredStashConfiguration.credStashValue, fromValueAnnotation);
         assertEquals(MockCredStashConfiguration.credStashValue, fromValueAnnotationNoDefault);
+        assertEquals(MockCredStashConfiguration.credStashValue, oneToOne);
     }
 
 }
