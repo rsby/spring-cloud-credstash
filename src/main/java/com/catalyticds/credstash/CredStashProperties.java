@@ -67,7 +67,6 @@ class CredStashProperties extends CredStashPropertyConfig {
         return "CredStashProperties{" +
                 "pathSeparator='" + pathSeparator + '\'' +
                 ", defaults=" + super.toString() +
-                ", more=" + more +
                 '}';
     }
 
