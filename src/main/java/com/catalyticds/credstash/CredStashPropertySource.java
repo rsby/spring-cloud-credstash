@@ -9,9 +9,11 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author reesbyars on 9/21/17.
@@ -23,16 +25,17 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
     private final CredStashProperties.Mode mode;
     private final Map<String, Optional<String>> cache = new LinkedHashMap<>();
     private final List<String> auditLog = new ArrayList<>();
+    private final String[] enumerableProperties;
 
     CredStashPropertySource(
             CredStash credStash,
-            List<CredStashPropertyConfig> propertyConfigs,
-            PathMatcher propertyMatcher,
-            CredStashProperties.Mode mode) {
+            CredStashProperties credStashProperties,
+            PathMatcher propertyMatcher) {
         super("credstash", credStash);
-        this.propertyConfigs = propertyConfigs;
+        this.propertyConfigs = credStashProperties.compileToOrderedList();
         this.propertyMatcher = propertyMatcher;
-        this.mode = mode;
+        this.mode = credStashProperties.getMode();
+        this.enumerableProperties = getEnumerableProperties(credStashProperties);
     }
 
     @Override
@@ -49,6 +52,11 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         return null;
     }
 
+    @Override
+    public String[] getPropertyNames() {
+        return enumerableProperties;
+    }
+
     @EventListener({ContextRefreshedEvent.class, ContextClosedEvent.class})
     void onContextRefreshed() {
         if (mode == CredStashProperties.Mode.AUDIT) {
@@ -56,11 +64,6 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         }
         auditLog.clear();
         cache.clear();
-    }
-
-    @Override
-    public String[] getPropertyNames() {
-        return new String[0];
     }
 
     private Optional<String> getSecretKey(String propertyName, CredStashPropertyConfig config) {
@@ -116,5 +119,23 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
             logger.debug(entry);
         }
         auditLog.add("\n    " + entry);
+    }
+
+    private static String[] getEnumerableProperties(CredStashProperties credStashProperties) {
+        if (!credStashProperties.getEnumerable()) {
+            return new String[]{};
+        }
+        Set<String> enumeratedProperties = new LinkedHashSet<>();
+        for (CredStashPropertyConfig config : credStashProperties.compileToOrderedList()) {
+            for (String matching : config.getMatching()) {
+                if (!matching.contains("*")) {
+                    enumeratedProperties.add(matching);
+                }
+            }
+            for (String oneToOne : config.getOneToOne().keySet()) {
+                enumeratedProperties.add(oneToOne);
+            }
+        }
+        return enumeratedProperties.toArray(new String[enumeratedProperties.size()]);
     }
 }

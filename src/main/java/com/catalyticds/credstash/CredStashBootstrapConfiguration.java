@@ -33,9 +33,8 @@ public class CredStashBootstrapConfiguration implements PropertySourceLocator {
     PropertySource<CredStash> credStashPropertySource() {
         return new CredStashPropertySource(
                 credStash(),
-                credStashProperties.compileToOrderedList(),
-                new AntPathMatcher(credStashProperties.getPathSeparator()),
-                credStashProperties.getMode());
+                credStashProperties,
+                new AntPathMatcher(credStashProperties.getPathSeparator()));
     }
 
     @Bean

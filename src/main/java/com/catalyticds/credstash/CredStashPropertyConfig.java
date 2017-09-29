@@ -14,6 +14,7 @@ public class CredStashPropertyConfig {
 
     private String name;
     private String table;
+    private Boolean enumerable = true;
     private Boolean enabled = true;
     private String addPrefix;
     private String stripPrefix;
@@ -44,6 +45,14 @@ public class CredStashPropertyConfig {
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Boolean getEnumerable() {
+        return enumerable;
+    }
+
+    public void setEnumerable(Boolean enumerable) {
+        this.enumerable = enumerable;
     }
 
     public String getAddPrefix() {
@@ -112,6 +121,7 @@ public class CredStashPropertyConfig {
         return "CredStashPropertyConfig{" +
                 "name='" + name + '\'' +
                 ", table='" + table + '\'' +
+                ", enumerable='" + enumerable + '\'' +
                 ", enabled='" + enabled + '\'' +
                 ", addPrefix='" + addPrefix + '\'' +
                 ", stripPrefix='" + stripPrefix + '\'' +
