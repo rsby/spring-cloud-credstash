@@ -1,4 +1,5 @@
 credstash:
+  mode: AUDIT
   enabled: true
   table: "test-store"
   addPrefix: "dev_"

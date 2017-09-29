@@ -1,5 +1,6 @@
 package com.catalyticds.credstash;
 
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.EnumerablePropertySource;
@@ -40,13 +41,15 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         for (CredStashPropertyConfig config : propertyConfigs) {
             Optional<String> optionalSecretKey = getSecretKey(propertyName, config);
             if (optionalSecretKey.isPresent()) {
-                return getSecret(propertyName, optionalSecretKey.get(), config);
+                String secretKey = optionalSecretKey.get();
+                logger.debug("Using key [" + secretKey + "] for retrieval of property [" + propertyName + "]");
+                return getSecret(propertyName, secretKey, config);
             }
         }
         return null;
     }
 
-    @EventListener(ContextRefreshedEvent.class)
+    @EventListener({ContextRefreshedEvent.class, ContextClosedEvent.class})
     void onContextRefreshed() {
         if (mode == CredStashProperties.Mode.AUDIT) {
             logger.info("CredStash audit log ==> " + auditLog);
@@ -93,12 +96,10 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
                 config.getVersion());
         cache.put(propertyName, secret);
         if (secret.isPresent()) {
-            auditLog.add("\n   Found " + propertyName + " mapped to secret key " +
-                    secretKey + " using " + config);
+            audit("Found " + propertyName + " mapped to secret key " + secretKey + " using " + config);
             return secret.get();
         }
-        auditLog.add("\n   Missing " + propertyName + " mapped to secret key " +
-                secretKey + " using " + config);
+        audit("Missing " + propertyName + " mapped to secret key " + secretKey + " using " + config);
         if (mode == CredStashProperties.Mode.PROD) {
             throw new CredStashPropertyMissingException(
                     propertyName,
@@ -108,5 +109,12 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
                             config));
         }
         return null;
+    }
+
+    private void audit(String entry) {
+        if (logger.isDebugEnabled()) {
+            logger.debug(entry);
+        }
+        auditLog.add("\n    " + entry);
     }
 }
