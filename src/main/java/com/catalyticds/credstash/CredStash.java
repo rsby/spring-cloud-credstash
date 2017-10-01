@@ -14,6 +14,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import static com.catalyticds.credstash.CredStashStrings.*;
+
 /**
  * @author jcoyle created on 2/1/16.
  * @author reesbyars refactored on 9/20/17.
@@ -45,7 +47,7 @@ public class CredStash {
         this.credStashCrypto = credStashCrypto;
     }
 
-    public Optional<DecryptedSecret> getSecret(SecretRequest request)  {
+    public Optional<DecryptedSecret> getSecret(SecretRequest request) {
 
         String tableName = request.getTable();
         Optional<String> optionalVersion = request.getVersion();
@@ -96,10 +98,10 @@ public class CredStash {
 
     private StoredSecret readVersionedDynamoItem(String tableName, String secretName, String version) {
         HashMap<String, AttributeValue> key = new HashMap<>();
-        key.put("name", new AttributeValue(secretName));
-        key.put("version", new AttributeValue(version));
+        key.put(Keys.NAME, new AttributeValue(secretName));
+        key.put(Keys.VERSION, new AttributeValue(version));
         GetItemResult getItemResult = amazonDynamoDBClient.getItem(new GetItemRequest(tableName, key, true));
-        if (getItemResult == null) {
+        if (getItemResult == null || getItemResult.getItem() == null) {
             return null;
         }
         Map<String, AttributeValue> item = getItemResult.getItem();
@@ -122,7 +124,7 @@ public class CredStash {
                 .withLimit(1)
                 .withScanIndexForward(false)
                 .withConsistentRead(true)
-                .addKeyConditionsEntry("name", new Condition()
+                .addKeyConditionsEntry(Keys.NAME, new Condition()
                         .withComparisonOperator(ComparisonOperator.EQ)
                         .withAttributeValueList(new AttributeValue(secretName)));
     }
@@ -140,27 +142,27 @@ public class CredStash {
         }
 
         byte[] getKey() {
-            return base64AttributeValueToBytes(item.get("key"));
+            return base64AttributeValueToBytes(item.get(Keys.KEY));
         }
 
         byte[] getContents() {
-            return base64AttributeValueToBytes(item.get("contents"));
+            return base64AttributeValueToBytes(item.get(Keys.CONTENTS));
         }
 
         byte[] getHmac() {
-            return hexAttributeValueToBytes(item.get("hmac"));
+            return hexAttributeValueToBytes(item.get(Keys.HMAC));
         }
 
         String getVersion() {
-            return item.get("version").getS();
+            return item.get(Keys.VERSION).getS();
         }
 
         String getName() {
-            return item.get("name").getS();
+            return item.get(Keys.NAME).getS();
         }
 
         String getDigest() {
-            return item.get("digest").getS();
+            return item.get(Keys.DIGEST).getS();
         }
 
         private static byte[] base64AttributeValueToBytes(AttributeValue value) {
@@ -172,20 +174,16 @@ public class CredStash {
             try {
                 if (b != null && b.remaining() > 0) {
                     // support for current versions of credstash
-                    return new Hex("UTF-8").decode(value.getB().array());
+                    return new Hex(ENCODING).decode(value.getB().array());
                 } else {
                     // support for backwards compatibility
-                    return new Hex("UTF-8").decode(value.getS().getBytes("UTF-8"));
+                    return new Hex(ENCODING).decode(value.getS().getBytes(ENCODING));
                 }
             } catch (UnsupportedEncodingException | DecoderException e) {
                 throw new CredStashAttributeEncodingException(value, "Attribute encoding exception", e);
             }
         }
 
-    }
-
-    public static String padVersion(Integer version) {
-        return String.format("%019d", version);
     }
 
 }

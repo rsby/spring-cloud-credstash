@@ -68,19 +68,16 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         if (!config.getEnabled()) {
             return Optional.empty();
         }
-        String secretKey = config.getOneToOne().get(propertyName);
-        if (secretKey != null) {
-            return Optional.of(secretKey);
-        }
-        for (String matching : config.getMatching()) {
-            if (propertyMatcher.match(matching, propertyName)) {
-                secretKey = propertyName;
-                if (!StringUtils.isEmpty(config.getStripPrefix())) {
-                    secretKey = secretKey.replace(config.getStripPrefix(), "");
-                }
-                secretKey = config.getAddPrefix() + secretKey;
-                return Optional.of(secretKey);
+        if (propertyMatcher.match(config.getName(), propertyName)) {
+            String secretKey = propertyName;
+            if (!StringUtils.isEmpty(config.getKey())) {
+                secretKey = config.getKey();
             }
+            if (!StringUtils.isEmpty(config.getStripPrefix())) {
+                secretKey = secretKey.replace(config.getStripPrefix(), "");
+            }
+            secretKey = config.getAddPrefix() + secretKey;
+            return Optional.of(secretKey);
         }
         return Optional.empty();
     }
@@ -126,13 +123,8 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         }
         Set<String> enumeratedProperties = new LinkedHashSet<>();
         for (CredStashPropertyConfig config : credStashProperties.compileToOrderedList()) {
-            for (String matching : config.getMatching()) {
-                if (!matching.contains("*")) {
-                    enumeratedProperties.add(matching);
-                }
-            }
-            for (String oneToOne : config.getOneToOne().keySet()) {
-                enumeratedProperties.add(oneToOne);
+            if (!config.getName().contains("*")) {
+                enumeratedProperties.add(config.getName());
             }
         }
         return enumeratedProperties.toArray(new String[enumeratedProperties.size()]);

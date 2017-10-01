@@ -30,6 +30,11 @@ public class SecretRequest {
         return this;
     }
 
+    public SecretRequest withVersion(Integer version) {
+        this.version = CredStashStrings.padVersion(version);
+        return this;
+    }
+
     public SecretRequest withContext(Map<String, String> context) {
         this.context = context;
         return this;

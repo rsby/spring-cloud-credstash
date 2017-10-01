@@ -1,8 +1,5 @@
 package com.catalyticds.credstash;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -18,9 +15,8 @@ public class CredStashPropertyConfig {
     private Boolean enabled = true;
     private String addPrefix;
     private String stripPrefix;
-    private List<String> matching = new ArrayList<>();
+    private String key;
     private String version;
-    private Map<String, String> oneToOne = new LinkedHashMap<>();
     private Map<String, String> context;
 
     public String getName() {
@@ -71,12 +67,12 @@ public class CredStashPropertyConfig {
         this.stripPrefix = stripPrefix;
     }
 
-    public List<String> getMatching() {
-        return matching;
+    public String getKey() {
+        return key;
     }
 
-    public void setMatching(List<String> matching) {
-        this.matching = matching;
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getVersion() {
@@ -87,14 +83,6 @@ public class CredStashPropertyConfig {
         this.version = version;
     }
 
-    public Map<String, String> getOneToOne() {
-        return oneToOne;
-    }
-
-    public void setOneToOne(Map<String, String> oneToOne) {
-        this.oneToOne = oneToOne;
-    }
-
     public Map<String, String> getContext() {
         return context;
     }
@@ -103,11 +91,7 @@ public class CredStashPropertyConfig {
         this.context = context;
     }
 
-    public CredStashPropertyConfig withNameAndDefaults(String name, CredStashPropertyConfig defaults) {
-        if (matching.isEmpty() && oneToOne.isEmpty()) {
-            throw new IllegalArgumentException("At least one entry in 'matching' or 'oneToOne' required for CredStash config " + name);
-        }
-        setName(name);
+    public CredStashPropertyConfig withDefaults(CredStashPropertyConfig defaults) {
         table = Objects.toString(table, defaults.getTable());
         addPrefix = Objects.toString(addPrefix, defaults.getAddPrefix());
         version = Objects.toString(version, defaults.getVersion());
@@ -125,8 +109,7 @@ public class CredStashPropertyConfig {
                 ", enabled='" + enabled + '\'' +
                 ", addPrefix='" + addPrefix + '\'' +
                 ", stripPrefix='" + stripPrefix + '\'' +
-                ", matching='" + matching + '\'' +
-                ", oneToOne='" + oneToOne + '\'' +
+                ", key='" + key + '\'' +
                 ", version='" + version + '\'' +
                 ", context=" + context +
                 '}';

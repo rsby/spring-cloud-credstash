@@ -2,6 +2,7 @@ package com.catalyticds.credstash;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,14 +16,13 @@ class CredStashProperties extends CredStashPropertyConfig {
 
     private String pathSeparator = ".";
     private Mode mode = Mode.PROD;
-    private Map<String, CredStashPropertyConfig> more = new LinkedHashMap<>();
+    private List<CredStashPropertyConfig> properties = new ArrayList<>();
 
     public CredStashProperties() {
         setName("defaults");
         setTable("credential-store");
         setEnabled(false);
         setAddPrefix("");
-        getMatching().add("");
         setVersion(null);
         setStripPrefix(null);
         setContext(new LinkedHashMap<>());
@@ -44,22 +44,13 @@ class CredStashProperties extends CredStashPropertyConfig {
         this.mode = mode;
     }
 
-    public Map<String, CredStashPropertyConfig> getMore() {
-        return more;
-    }
-
-    public void setMore(Map<String, CredStashPropertyConfig> more) {
-        this.more = more;
+    public List<CredStashPropertyConfig> getProperties() {
+        return properties;
     }
 
     List<CredStashPropertyConfig> compileToOrderedList() {
-        List<CredStashPropertyConfig> configs = more
-                .entrySet()
-                .stream()
-                .map(entry -> entry.getValue().withNameAndDefaults(entry.getKey(), this))
-                .collect(Collectors.toList());
-        configs.add(this);
-        return configs;
+        properties.forEach(config -> config.withDefaults(this));
+        return properties;
     }
 
     @Override

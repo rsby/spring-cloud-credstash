@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.catalyticds.credstash.CredStash.padVersion;
+import static com.catalyticds.credstash.CredStashStrings.*;
 import static com.catalyticds.credstash.CredStashCrypto.INITIALIZATION_VECTOR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -83,7 +83,7 @@ public class CredStashTest {
         Optional<DecryptedSecret> decryptedSecretOptional =
                 credStash.getSecret(new SecretRequest(secretName)
                         .withTable(table)
-                        .withVersion(padVersion(1)));
+                        .withVersion(1));
 
         DecryptedSecret decryptedSecret = decryptedSecretOptional.orElseThrow(RuntimeException::new);
 
@@ -147,15 +147,15 @@ public class CredStashTest {
             int contentsOffset = 0;
             int resultOffset = 0;
             cipher.processBytes(secretBytes, contentsOffset, contents.length, contents, resultOffset);
-            byte[] hmac = new CredStashBouncyCastleCrypto().digest(hmacKeyBytes, contents, "SHA256");
+            byte[] hmac = new CredStashBouncyCastleCrypto().digest(hmacKeyBytes, contents, Digests.SHA256);
 
             item = new HashMap<>();
-            item.put("name", new AttributeValue(secretName));
-            item.put("version", new AttributeValue(padVersion(version)));
-            item.put("key", new AttributeValue(new String(Base64.getEncoder().encode(encryptedKeyBytes))));
-            item.put("contents", new AttributeValue(new String(Base64.getEncoder().encode(contents))));
-            item.put("hmac", new AttributeValue(new String(Hex.encodeHex(hmac))));
-            item.put("digest", new AttributeValue("SHA256"));
+            item.put(Keys.NAME, new AttributeValue(secretName));
+            item.put(Keys.VERSION, new AttributeValue(padVersion(version)));
+            item.put(Keys.KEY, new AttributeValue(new String(Base64.getEncoder().encode(encryptedKeyBytes))));
+            item.put(Keys.CONTENTS, new AttributeValue(new String(Base64.getEncoder().encode(contents))));
+            item.put(Keys.HMAC, new AttributeValue(new String(Hex.encodeHex(hmac))));
+            item.put(Keys.DIGEST, new AttributeValue(Digests.SHA256));
         }
     }
 }
