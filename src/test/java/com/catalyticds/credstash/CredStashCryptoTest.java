@@ -64,7 +64,7 @@ public abstract class CredStashCryptoTest {
 
         CredStashCrypto crypto = getCryptoImplementation();
 
-        byte[] actualDigest = crypto.digest(digestKeyBytes, decryptedBytes);
+        byte[] actualDigest = crypto.digest(digestKeyBytes, decryptedBytes, "SHA256");
 
         assertThat("Digest: " + javax.xml.bind.DatatypeConverter.printHexBinary(actualDigest), actualDigest, equalTo(digestBytes));
     }
