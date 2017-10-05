@@ -8,15 +8,33 @@ A read-only Spring Cloud library for retrieving application
   to a single property or two at most.
  
 ### Does it load all credentials from the CredStash store?
-No. The CredStashPropertySource is not an EnumerablePropertySource, therefore it
-is used exclusively for overrides of properties declared or requested elsewhere. 
+No. Loading all properties requires table scanning permission in DynamoDB, and we elected not to require
+that permission. However, some properties, such as `spring.datasource.password`, may need to be enumerated in order
+to be set. In those cases, explicitly listing the property in the yaml config (shown below) will suffice. 
  
-### Simple use and configuration - credential store per environment or VPC
+### Basic use and configuration
 As a Spring Cloud bootstrap component, all that is required to begin retrieving
 secrets from a CredStash store is to add this library to your Spring Boot app and
 configure the following in your `bootstrap.yml` or `application.yml`:
 
     credstash:
+      enabled: true
+      table: test-store
+      properties:
+        - name: "**.secret"
+        - name: "spring.datasource.password"
+          key: 
+        - name: "test.from*"
+        - name: "test.oneToOne"
+          addPrefix:
+          key: one_to_one_secret_key
+        - name: "**.pass"
+        - name: "credstash__*"
+          stripPrefix: "credstash__"
+          context:
+            my-app: key
+        - name: "test.test"
+          enabled: false
       enabled: true
       table: "qa-credential-store"
       matching:

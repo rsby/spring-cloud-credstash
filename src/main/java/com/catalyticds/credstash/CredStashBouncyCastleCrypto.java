@@ -32,7 +32,7 @@ class CredStashBouncyCastleCrypto implements CredStashCrypto {
     @Override
     public byte[] digest(byte[] key, byte[] contents, String algorithm) {
 
-        if (algorithm != null && !algorithm.equalsIgnoreCase("SHA256")) {
+        if (algorithm != null && !algorithm.equalsIgnoreCase(CredStashStrings.Digests.SHA256)) {
             throw new CredStashUnsupportedDigestException("Only SHA256 supported. Requested ==> " +
                     algorithm, algorithm);
         }
