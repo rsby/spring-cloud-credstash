@@ -7,13 +7,12 @@ credstash:
     - name: "**.secret"
     - name: "my.exact.match"
     - name: "test.from*"
+      context:
+        my-app: key
     - name: "test.oneToOne"
       addPrefix:
       key: one_to_one_secret_key
     - name: "**.pass"
-    - name: "credstash__*"
-      stripPrefix: "credstash__"
-      context:
-        my-app: key
     - name: "test.test"
       enabled: false
+

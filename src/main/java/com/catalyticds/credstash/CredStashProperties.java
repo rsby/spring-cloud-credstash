@@ -49,6 +49,10 @@ class CredStashProperties extends CredStashPropertyConfig {
     }
 
     List<CredStashPropertyConfig> compileToOrderedList() {
+        CredStashPropertyConfig defaultConfig = new CredStashPropertyConfig();
+        defaultConfig.setName("credstash__*.**");
+        defaultConfig.setStripPrefix("credstash__");
+        properties.add(defaultConfig);
         properties.forEach(config -> config.withDefaults(this));
         return properties;
     }
