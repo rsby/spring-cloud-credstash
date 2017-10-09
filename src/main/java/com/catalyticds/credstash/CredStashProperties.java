@@ -2,7 +2,6 @@ package com.catalyticds.credstash;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,10 +15,10 @@ class CredStashProperties extends CredStashPropertyConfig {
 
     private String pathSeparator = ".";
     private Mode mode = Mode.PROD;
-    private List<CredStashPropertyConfig> properties = new ArrayList<>();
+    private Map<String, CredStashPropertyConfig> properties = new LinkedHashMap<>();
 
     public CredStashProperties() {
-        setName("defaults");
+        setName("root");
         setTable("credential-store");
         setEnabled(false);
         setAddPrefix("");
@@ -44,17 +43,19 @@ class CredStashProperties extends CredStashPropertyConfig {
         this.mode = mode;
     }
 
-    public List<CredStashPropertyConfig> getProperties() {
+    public Map<String, CredStashPropertyConfig> getProperties() {
         return properties;
     }
 
     List<CredStashPropertyConfig> compileToOrderedList() {
         CredStashPropertyConfig defaultConfig = new CredStashPropertyConfig();
-        defaultConfig.setName("credstash__*.**");
+        defaultConfig.getMatching().addAll(getMatching());
+        defaultConfig.getMatching().add(new PropertyEntry("credstash__*.**"));
         defaultConfig.setStripPrefix("credstash__");
-        properties.add(defaultConfig);
-        properties.forEach(config -> config.withDefaults(this));
-        return properties;
+        properties.put("default", defaultConfig);
+        return properties.entrySet().stream()
+                .map(p -> p.getValue().withDefaults(p.getKey(), this))
+                .collect(Collectors.toList());
     }
 
     @Override

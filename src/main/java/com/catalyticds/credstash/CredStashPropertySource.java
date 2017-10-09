@@ -35,7 +35,7 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         this.propertyConfigs = credStashProperties.compileToOrderedList();
         this.propertyMatcher = propertyMatcher;
         this.mode = credStashProperties.getMode();
-        this.enumerableProperties = getEnumerableProperties(credStashProperties);
+        this.enumerableProperties = getEnumerableProperties();
     }
 
     @Override
@@ -68,16 +68,18 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         if (!config.getEnabled()) {
             return Optional.empty();
         }
-        if (propertyMatcher.match(config.getName(), propertyName)) {
-            String secretKey = propertyName;
-            if (!StringUtils.isEmpty(config.getKey())) {
-                secretKey = config.getKey();
+        for (CredStashPropertyConfig.PropertyEntry entry : config.getMatching()) {
+            if (propertyMatcher.match(entry.getPattern(), propertyName)) {
+                String secretKey = propertyName;
+                if (!StringUtils.isEmpty(entry.getKey())) {
+                    secretKey = entry.getKey();
+                }
+                if (!StringUtils.isEmpty(config.getStripPrefix())) {
+                    secretKey = secretKey.replace(config.getStripPrefix(), "");
+                }
+                secretKey = config.getAddPrefix() + secretKey;
+                return Optional.of(secretKey);
             }
-            if (!StringUtils.isEmpty(config.getStripPrefix())) {
-                secretKey = secretKey.replace(config.getStripPrefix(), "");
-            }
-            secretKey = config.getAddPrefix() + secretKey;
-            return Optional.of(secretKey);
         }
         return Optional.empty();
     }
@@ -117,14 +119,15 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         auditLog.add("\n    " + entry);
     }
 
-    private static String[] getEnumerableProperties(CredStashProperties credStashProperties) {
-        if (!credStashProperties.getEnumerable()) {
-            return new String[]{};
-        }
+    private String[] getEnumerableProperties() {
         Set<String> enumeratedProperties = new LinkedHashSet<>();
-        for (CredStashPropertyConfig config : credStashProperties.compileToOrderedList()) {
-            if (!config.getName().contains("*")) {
-                enumeratedProperties.add(config.getName());
+        for (CredStashPropertyConfig config : propertyConfigs) {
+            if (config.getEnumerable()) {
+                for (CredStashPropertyConfig.PropertyEntry entry : config.getMatching()) {
+                    if (!entry.getPattern().contains("*")) {
+                        enumeratedProperties.add(entry.getPattern());
+                    }
+                }
             }
         }
         return enumeratedProperties.toArray(new String[enumeratedProperties.size()]);
