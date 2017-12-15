@@ -1,22 +1,21 @@
 credstash:
   mode: AUDIT
   enabled: true
-  table: "test-store"
-  addPrefix: "dev_"
+  table: test-store
+  add-prefix: dev_
   matching:
-   - "**.secret"
-   - "my.exact.match"
-   - "test.from*"
-  oneToOne:
-    test.oneToOne: "one_to_one_secret_key"
-  more:
-    pass:
-      matching: "**.pass"
-    key:
-      stripPrefix: "credstash__"
-      matching: "credstash__*"
+    - "**.secret"
+    - "my.exact.match"
+    - pattern: "test.oneToOne"
+      key: one_to_one_secret_key
+    - "**.pass"
+  properties:
+    contextual:
+      matching:
+        - "test.from*"
       context:
-        my-app: "key"
-    test:
+        my-app: key
+    disabled:
       enabled: false
-      matching: "test.test"
+      matching:
+        - "test.test"

@@ -16,5 +16,5 @@ public interface CredStashCrypto {
 
     byte[] decrypt(byte[] key, byte[] contents);
 
-    byte[] digest(byte[] keyBytes, byte[] contents);
+    byte[] digest(byte[] keyBytes, byte[] contents, String algorithm);
 }

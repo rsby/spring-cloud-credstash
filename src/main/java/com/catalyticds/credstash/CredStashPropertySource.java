@@ -23,7 +23,7 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
     private final List<CredStashPropertyConfig> propertyConfigs;
     private final PathMatcher propertyMatcher;
     private final CredStashProperties.Mode mode;
-    private final Map<String, Optional<String>> cache = new LinkedHashMap<>();
+    private final Map<String, Optional<DecryptedSecret>> cache = new LinkedHashMap<>();
     private final List<String> auditLog = new ArrayList<>();
     private final String[] enumerableProperties;
 
@@ -35,7 +35,7 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         this.propertyConfigs = credStashProperties.compileToOrderedList();
         this.propertyMatcher = propertyMatcher;
         this.mode = credStashProperties.getMode();
-        this.enumerableProperties = getEnumerableProperties(credStashProperties);
+        this.enumerableProperties = getEnumerableProperties();
     }
 
     @Override
@@ -44,9 +44,7 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         for (CredStashPropertyConfig config : propertyConfigs) {
             Optional<String> optionalSecretKey = getSecretKey(propertyName, config);
             if (optionalSecretKey.isPresent()) {
-                String secretKey = optionalSecretKey.get();
-                logger.debug("Using key [" + secretKey + "] for retrieval of property [" + propertyName + "]");
-                return getSecret(propertyName, secretKey, config);
+                return getSecret(propertyName, optionalSecretKey.get(), config);
             }
         }
         return null;
@@ -70,13 +68,12 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         if (!config.getEnabled()) {
             return Optional.empty();
         }
-        String secretKey = config.getOneToOne().get(propertyName);
-        if (secretKey != null) {
-            return Optional.of(secretKey);
-        }
-        for (String matching : config.getMatching()) {
-            if (propertyMatcher.match(matching, propertyName)) {
-                secretKey = propertyName;
+        for (CredStashPropertyConfig.PropertyEntry entry : config.getMatching()) {
+            if (propertyMatcher.match(entry.getPattern(), propertyName)) {
+                String secretKey = propertyName;
+                if (!StringUtils.isEmpty(entry.getKey())) {
+                    secretKey = entry.getKey();
+                }
                 if (!StringUtils.isEmpty(config.getStripPrefix())) {
                     secretKey = secretKey.replace(config.getStripPrefix(), "");
                 }
@@ -88,21 +85,22 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
     }
 
     private String getSecret(String propertyName, String secretKey, CredStashPropertyConfig config) {
-        Optional<String> secret = cache.get(secretKey);
+        Optional<DecryptedSecret> secret = cache.get(secretKey);
         if (secret != null) {
-            return secret.orElse(null);
+            return secret.isPresent() ? secret.get().getSecret() : null;
         }
-        secret = source.getSecret(
-                config.getTable(),
-                secretKey,
-                config.getContext(),
-                config.getVersion());
+        SecretRequest request = new SecretRequest(secretKey)
+                .withTable(config.getTable())
+                .withVersion(config.getVersion())
+                .withContext(config.getContext());
+        logger.debug("Retrieving property [" + propertyName + "] with request [" + request + "]");
+        secret = source.getSecret(request);
         cache.put(propertyName, secret);
         if (secret.isPresent()) {
-            audit("Found " + propertyName + " mapped to secret key " + secretKey + " using " + config);
-            return secret.get();
+            audit("Found " + propertyName + " using " + request + " built from " + config);
+            return secret.get().getSecret();
         }
-        audit("Missing " + propertyName + " mapped to secret key " + secretKey + " using " + config);
+        audit("Missing " + propertyName + " using " + request + " built from " + config);
         if (mode == CredStashProperties.Mode.PROD) {
             throw new CredStashPropertyMissingException(
                     propertyName,
@@ -121,19 +119,15 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         auditLog.add("\n    " + entry);
     }
 
-    private static String[] getEnumerableProperties(CredStashProperties credStashProperties) {
-        if (!credStashProperties.getEnumerable()) {
-            return new String[]{};
-        }
+    private String[] getEnumerableProperties() {
         Set<String> enumeratedProperties = new LinkedHashSet<>();
-        for (CredStashPropertyConfig config : credStashProperties.compileToOrderedList()) {
-            for (String matching : config.getMatching()) {
-                if (!matching.contains("*")) {
-                    enumeratedProperties.add(matching);
+        for (CredStashPropertyConfig config : propertyConfigs) {
+            if (config.getEnumerable()) {
+                for (CredStashPropertyConfig.PropertyEntry entry : config.getMatching()) {
+                    if (!entry.getPattern().contains("*")) {
+                        enumeratedProperties.add(entry.getPattern());
+                    }
                 }
-            }
-            for (String oneToOne : config.getOneToOne().keySet()) {
-                enumeratedProperties.add(oneToOne);
             }
         }
         return enumeratedProperties.toArray(new String[enumeratedProperties.size()]);

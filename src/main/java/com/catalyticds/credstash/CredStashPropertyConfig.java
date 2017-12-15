@@ -1,7 +1,6 @@
 package com.catalyticds.credstash;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -13,14 +12,13 @@ import java.util.Optional;
 public class CredStashPropertyConfig {
 
     private String name;
-    private String table;
     private Boolean enumerable = true;
     private Boolean enabled = true;
+    private List<PropertyEntry> matching = new ArrayList<>();
     private String addPrefix;
     private String stripPrefix;
-    private List<String> matching = new ArrayList<>();
+    private String table;
     private String version;
-    private Map<String, String> oneToOne = new LinkedHashMap<>();
     private Map<String, String> context;
 
     public String getName() {
@@ -31,12 +29,12 @@ public class CredStashPropertyConfig {
         this.name = name;
     }
 
-    public String getTable() {
-        return table;
+    public Boolean getEnumerable() {
+        return enumerable;
     }
 
-    public void setTable(String table) {
-        this.table = table;
+    public void setEnumerable(Boolean enumerable) {
+        this.enumerable = enumerable;
     }
 
     public Boolean getEnabled() {
@@ -47,12 +45,8 @@ public class CredStashPropertyConfig {
         this.enabled = enabled;
     }
 
-    public Boolean getEnumerable() {
-        return enumerable;
-    }
-
-    public void setEnumerable(Boolean enumerable) {
-        this.enumerable = enumerable;
+    public List<PropertyEntry> getMatching() {
+        return matching;
     }
 
     public String getAddPrefix() {
@@ -71,12 +65,12 @@ public class CredStashPropertyConfig {
         this.stripPrefix = stripPrefix;
     }
 
-    public List<String> getMatching() {
-        return matching;
+    public String getTable() {
+        return table;
     }
 
-    public void setMatching(List<String> matching) {
-        this.matching = matching;
+    public void setTable(String table) {
+        this.table = table;
     }
 
     public String getVersion() {
@@ -87,14 +81,6 @@ public class CredStashPropertyConfig {
         this.version = version;
     }
 
-    public Map<String, String> getOneToOne() {
-        return oneToOne;
-    }
-
-    public void setOneToOne(Map<String, String> oneToOne) {
-        this.oneToOne = oneToOne;
-    }
-
     public Map<String, String> getContext() {
         return context;
     }
@@ -103,15 +89,12 @@ public class CredStashPropertyConfig {
         this.context = context;
     }
 
-    public CredStashPropertyConfig withNameAndDefaults(String name, CredStashPropertyConfig defaults) {
-        if (matching.isEmpty() && oneToOne.isEmpty()) {
-            throw new IllegalArgumentException("At least one entry in 'matching' or 'oneToOne' required for CredStash config " + name);
-        }
-        setName(name);
-        table = Objects.toString(table, defaults.getTable());
+    public CredStashPropertyConfig withDefaults(String name, CredStashPropertyConfig defaults) {
+        this.name = name;
         addPrefix = Objects.toString(addPrefix, defaults.getAddPrefix());
-        version = Objects.toString(version, defaults.getVersion());
         stripPrefix = Objects.toString(stripPrefix, defaults.getStripPrefix());
+        table = Objects.toString(table, defaults.getTable());
+        version = Objects.toString(version, defaults.getVersion());
         context = Optional.ofNullable(context).orElse(defaults.getContext());
         return this;
     }
@@ -120,15 +103,50 @@ public class CredStashPropertyConfig {
     public String toString() {
         return "CredStashPropertyConfig{" +
                 "name='" + name + '\'' +
-                ", table='" + table + '\'' +
-                ", enumerable='" + enumerable + '\'' +
-                ", enabled='" + enabled + '\'' +
+                ", enumerable=" + enumerable +
+                ", enabled=" + enabled +
+                ", matching=" + matching +
                 ", addPrefix='" + addPrefix + '\'' +
                 ", stripPrefix='" + stripPrefix + '\'' +
-                ", matching='" + matching + '\'' +
-                ", oneToOne='" + oneToOne + '\'' +
+                ", table='" + table + '\'' +
                 ", version='" + version + '\'' +
                 ", context=" + context +
                 '}';
+    }
+
+    public static class PropertyEntry {
+
+        private String pattern;
+        private String key;
+
+        public PropertyEntry() { }
+
+        public PropertyEntry(String pattern) {
+            this.pattern = pattern;
+        }
+
+        public String getPattern() {
+            return pattern;
+        }
+
+        public void setPattern(String pattern) {
+            this.pattern = pattern;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public String toString() {
+            return "PropertyEntry{" +
+                    "pattern='" + pattern + '\'' +
+                    ", key='" + key + '\'' +
+                    '}';
+        }
     }
 }

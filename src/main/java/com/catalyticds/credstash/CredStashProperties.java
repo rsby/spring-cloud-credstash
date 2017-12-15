@@ -15,14 +15,13 @@ class CredStashProperties extends CredStashPropertyConfig {
 
     private String pathSeparator = ".";
     private Mode mode = Mode.PROD;
-    private Map<String, CredStashPropertyConfig> more = new LinkedHashMap<>();
+    private Map<String, CredStashPropertyConfig> properties = new LinkedHashMap<>();
 
     public CredStashProperties() {
-        setName("defaults");
+        setName("root");
         setTable("credential-store");
         setEnabled(false);
         setAddPrefix("");
-        getMatching().add("");
         setVersion(null);
         setStripPrefix(null);
         setContext(new LinkedHashMap<>());
@@ -44,22 +43,19 @@ class CredStashProperties extends CredStashPropertyConfig {
         this.mode = mode;
     }
 
-    public Map<String, CredStashPropertyConfig> getMore() {
-        return more;
-    }
-
-    public void setMore(Map<String, CredStashPropertyConfig> more) {
-        this.more = more;
+    public Map<String, CredStashPropertyConfig> getProperties() {
+        return properties;
     }
 
     List<CredStashPropertyConfig> compileToOrderedList() {
-        List<CredStashPropertyConfig> configs = more
-                .entrySet()
-                .stream()
-                .map(entry -> entry.getValue().withNameAndDefaults(entry.getKey(), this))
+        CredStashPropertyConfig defaultConfig = new CredStashPropertyConfig();
+        defaultConfig.getMatching().addAll(getMatching());
+        defaultConfig.getMatching().add(new PropertyEntry("credstash__*.**"));
+        defaultConfig.setStripPrefix("credstash__");
+        properties.put("default", defaultConfig);
+        return properties.entrySet().stream()
+                .map(p -> p.getValue().withDefaults(p.getKey(), this))
                 .collect(Collectors.toList());
-        configs.add(this);
-        return configs;
     }
 
     @Override

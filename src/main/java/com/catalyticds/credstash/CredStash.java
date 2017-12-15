@@ -1,13 +1,20 @@
 package com.catalyticds.credstash;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.kms.AWSKMS;
+import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.kms.model.DecryptRequest;
 import com.amazonaws.services.kms.model.DecryptResult;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.*;
+
+import static com.catalyticds.credstash.CredStashStrings.*;
 
 /**
  * @author jcoyle created on 2/1/16.
@@ -18,6 +25,13 @@ public class CredStash {
     private final AmazonDynamoDB amazonDynamoDBClient;
     private final AWSKMS awsKmsClient;
     private final CredStashCrypto credStashCrypto;
+
+    public CredStash() {
+        this(
+                AmazonDynamoDBClientBuilder.defaultClient(),
+                AWSKMSClientBuilder.defaultClient(),
+                new CredStashBouncyCastleCrypto());
+    }
 
     /**
      * @param amazonDynamoDBClient AWS SDK client for DynamoDB
@@ -33,57 +47,30 @@ public class CredStash {
         this.credStashCrypto = credStashCrypto;
     }
 
-    /**
-     * Gets a secret from credstash.
-     *
-     * @param tableName the dynamo table name (likely "credential-store")
-     * @param secretName the name of the secret to get
-     * @return unencrypted secret
-     */
-    public Optional<String> getSecret(String tableName, String secretName)  {
-        return getSecret(tableName, secretName, null, null);
-    }
+    public Optional<DecryptedSecret> getSecret(SecretRequest request) {
 
-    /**
-     * Gets a secret from credstash.
-     *
-     * @param tableName the dynamo table name (likely "credential-store")
-     * @param secretName the name of the secret to get
-     * @param context encryption context key/value pairs associated with the credential in the form of "key=value"
-     * @return unencrypted secret
-     */
-    public Optional<String> getSecret(String tableName, String secretName, Map<String, String> context)  {
-        return getSecret(tableName, secretName, context, null);
-    }
+        String tableName = request.getTable();
+        Optional<String> optionalVersion = request.getVersion();
+        String secretName = request.getSecretName();
 
-    /**
-     * Gets a secret from credstash with a specified version
-     *
-     * @param tableName the dynamo table name (likely "credential-store")
-     * @param secretName the name of the secret to get
-     * @param context encryption context key/value pairs associated with the credential in the form of "key=value"
-     * @param version a particular version string to lookup (null for latest version)
-     * @return unencrypted secret
-     */
-    public Optional<String> getSecret(
-            String tableName, String secretName, Map<String, String> context, String version)  {
         // First find the relevant rows from the credstash table
-        StoredSecret encrypted = version == null ?
-                readHighestVersionDynamoItem(tableName, secretName) :
-                readVersionedDynamoItem(tableName, secretName, version);
+        StoredSecret encrypted = optionalVersion.isPresent() ?
+                readVersionedDynamoItem(tableName, secretName, optionalVersion.get()) :
+                readHighestVersionDynamoItem(tableName, secretName);
+
         if (encrypted == null) {
             return Optional.empty();
         }
-        return getStoredSecret(encrypted, context);
-    }
-
-    Optional<String> getStoredSecret(StoredSecret encrypted, Map<String, String> context)  {
 
         // The secret was encrypted using AES, then the key for that encryption was encrypted with AWS KMS
         // Then both the encrypted secret and the encrypted key are stored in dynamo
 
         // First obtain that original key again using KMS
-        ByteBuffer plainText = decryptKeyWithKMS(encrypted.getKey(), context);
+        ByteBuffer encryptedBuffer = ByteBuffer.wrap(encrypted.getKey());
+        DecryptRequest decryptRequest = new DecryptRequest().withCiphertextBlob(encryptedBuffer);
+        request.getContext().ifPresent(decryptRequest::withEncryptionContext);
+        DecryptResult decryptResult = awsKmsClient.decrypt(decryptRequest);
+        ByteBuffer plainText = decryptResult.getPlaintext();
 
         // The key is just the first 32 bits, the remaining are for HMAC signature checking
         byte[] keyBytes = new byte[32];
@@ -92,7 +79,7 @@ public class CredStash {
         byte[] hmacKeyBytes = new byte[plainText.remaining()];
         plainText.get(hmacKeyBytes);
         byte[] encryptedContents = encrypted.getContents();
-        byte[] digest = credStashCrypto.digest(hmacKeyBytes, encryptedContents);
+        byte[] digest = credStashCrypto.digest(hmacKeyBytes, encryptedContents, encrypted.getDigest());
         if (!Arrays.equals(digest, encrypted.getHmac())) {
             throw new CredStashSignatureException(
                     encrypted.getName(),
@@ -102,15 +89,19 @@ public class CredStash {
 
         // now use AES to finally decrypt the actual secret
         byte[] decryptedBytes = credStashCrypto.decrypt(keyBytes, encryptedContents);
-        return Optional.of(new String(decryptedBytes));
+        return Optional.of(new DecryptedSecret(
+                tableName,
+                secretName,
+                encrypted.getVersion(),
+                new String(decryptedBytes)));
     }
 
     private StoredSecret readVersionedDynamoItem(String tableName, String secretName, String version) {
         HashMap<String, AttributeValue> key = new HashMap<>();
-        key.put("name", new AttributeValue(secretName));
-        key.put("version", new AttributeValue(version));
+        key.put(Keys.NAME, new AttributeValue(secretName));
+        key.put(Keys.VERSION, new AttributeValue(version));
         GetItemResult getItemResult = amazonDynamoDBClient.getItem(new GetItemRequest(tableName, key, true));
-        if (getItemResult == null) {
+        if (getItemResult == null || getItemResult.getItem() == null) {
             return null;
         }
         Map<String, AttributeValue> item = getItemResult.getItem();
@@ -128,24 +119,71 @@ public class CredStash {
         return new StoredSecret(item);
     }
 
-    private ByteBuffer decryptKeyWithKMS(byte[] encryptedKeyBytes, Map<String, String> context) {
-        ByteBuffer blob = ByteBuffer.wrap(encryptedKeyBytes);
-        DecryptRequest decryptRequest = new DecryptRequest().withCiphertextBlob(blob);
-        if (context != null) {
-            decryptRequest.withEncryptionContext(context);
-        }
-        DecryptResult decryptResult = awsKmsClient.decrypt(decryptRequest);
-        return decryptResult.getPlaintext();
-    }
-
     private QueryRequest basicQueryRequest(String tableName, String secretName) {
         return new QueryRequest(tableName)
                 .withLimit(1)
                 .withScanIndexForward(false)
                 .withConsistentRead(true)
-                .addKeyConditionsEntry("name", new Condition()
+                .addKeyConditionsEntry(Keys.NAME, new Condition()
                         .withComparisonOperator(ComparisonOperator.EQ)
                         .withAttributeValueList(new AttributeValue(secretName)));
+    }
+
+    /**
+     * Represents a row in a credstash table. The encrypted key and encrypted contents are both stored base64 encoded.
+     * The hmac digest is stored hex encoded.
+     */
+    private static class StoredSecret {
+
+        private final Map<String, AttributeValue> item;
+
+        StoredSecret(Map<String, AttributeValue> item) {
+            this.item = item;
+        }
+
+        byte[] getKey() {
+            return base64AttributeValueToBytes(item.get(Keys.KEY));
+        }
+
+        byte[] getContents() {
+            return base64AttributeValueToBytes(item.get(Keys.CONTENTS));
+        }
+
+        byte[] getHmac() {
+            return hexAttributeValueToBytes(item.get(Keys.HMAC));
+        }
+
+        String getVersion() {
+            return item.get(Keys.VERSION).getS();
+        }
+
+        String getName() {
+            return item.get(Keys.NAME).getS();
+        }
+
+        String getDigest() {
+            return item.get(Keys.DIGEST).getS();
+        }
+
+        private static byte[] base64AttributeValueToBytes(AttributeValue value) {
+            return Base64.getDecoder().decode(value.getS());
+        }
+
+        private static byte[] hexAttributeValueToBytes(AttributeValue value) {
+            ByteBuffer b = value.getB();
+            try {
+                if (b != null && b.remaining() > 0) {
+                    // support for current versions of credstash
+                    return new Hex(ENCODING).decode(value.getB().array());
+                } else {
+                    // support for backwards compatibility
+                    return new Hex(ENCODING).decode(value.getS().getBytes(ENCODING));
+                }
+            } catch (UnsupportedEncodingException | DecoderException e) {
+                throw new CredStashAttributeEncodingException(value, "Attribute encoding exception", e);
+            }
+        }
+
     }
 
 }

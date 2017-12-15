@@ -3,98 +3,159 @@ package com.catalyticds.credstash;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.kms.AWSKMS;
-import com.amazonaws.services.kms.model.DecryptRequest;
 import com.amazonaws.services.kms.model.DecryptResult;
-import com.amazonaws.services.kms.model.GenerateDataKeyRequest;
-import com.amazonaws.services.kms.model.GenerateDataKeyResult;
 import org.apache.commons.codec.binary.Hex;
-import org.junit.Assert;
-import org.junit.Before;
+import org.bouncycastle.crypto.BlockCipher;
+import org.bouncycastle.crypto.StreamBlockCipher;
+import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.modes.SICBlockCipher;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.mockito.internal.verification.VerificationModeFactory;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.catalyticds.credstash.CredStashStrings.*;
+import static com.catalyticds.credstash.CredStashCrypto.INITIALIZATION_VECTOR;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
+
 public class CredStashTest {
 
-    private AmazonDynamoDB dynamoDBClient;
-    private AWSKMS awskmsClient;
-
-    @Before
-    public void setUp() {
-        dynamoDBClient = Mockito.mock(AmazonDynamoDB.class);
-
-        GenerateDataKeyResult generateDatakeyResult = new GenerateDataKeyResult();
-        generateDatakeyResult.setCiphertextBlob(Mockito.mock(ByteBuffer.class));
-        generateDatakeyResult.setPlaintext(Mockito.mock(ByteBuffer.class));
-
-        DecryptResult decryptResult = new DecryptResult();
-        decryptResult.setKeyId("alias/foo");
-        decryptResult.setPlaintext(Mockito.mock(ByteBuffer.class));
-
-        awskmsClient = Mockito.mock(AWSKMS.class);
-        Mockito.when(awskmsClient.generateDataKey(Mockito.any(GenerateDataKeyRequest.class))).thenReturn(generateDatakeyResult);
-        Mockito.when(awskmsClient.decrypt(Mockito.any(DecryptRequest.class))).thenReturn(decryptResult);
-    }
-
-    protected Map<String, AttributeValue> mockItem(String secretName, String newVersion, byte[] encryptedKeyBytes, byte[] contents, byte[] hmac) {
-
-        Map<String, AttributeValue> item = new HashMap<>();
-        item.put("name", new AttributeValue(secretName));
-        item.put("version", new AttributeValue(newVersion));
-        item.put("key", new AttributeValue(new String(Base64.getEncoder().encode(encryptedKeyBytes))));
-        item.put("contents", new AttributeValue(new String(Base64.getEncoder().encode(contents))));
-        item.put("hmac", new AttributeValue(new String(Hex.encodeHex(hmac))));
-        return item;
-    }
+    private AmazonDynamoDB dynamoDBClient = mock(AmazonDynamoDB.class);
+    private AWSKMS awskmsClient = mock(AWSKMS.class);
+    private CredStash credStash = new CredStash(dynamoDBClient, awskmsClient, new CredStashBouncyCastleCrypto());
 
     @Test
     public void testGetSecret() {
-        final QueryRequest[] queryRequest = new QueryRequest[1];
-        Mockito.when(dynamoDBClient.query(Mockito.any(QueryRequest.class))).thenAnswer(invocationOnMock -> {
-            Object[] args = invocationOnMock.getArguments();
-            queryRequest[0] = (QueryRequest) args[0];
-            return new QueryResult().withCount(1).withItems(Arrays.asList(
-                    mockItem("mysecret", padVersion(1), new byte[]{}, new byte[]{}, new byte[]{})
-            ));
-        });
 
+        String secret = "@#$rttegert$%";
+        String secretName = "my_secret_name";
+        String table = "my_table";
 
-        CredStash credStash = Mockito.spy(new CredStash(dynamoDBClient, awskmsClient, new CredStashBouncyCastleCrypto()));
+        MockCredStashData data = new MockCredStashData(secret, secretName, 1);
 
-        Mockito.doReturn(Optional.of("foo")).when(credStash).getStoredSecret(Mockito.any(StoredSecret.class), Mockito.any(Map.class));
+        when(dynamoDBClient.query(any())).thenReturn(data.queryResult());
+        when(awskmsClient.decrypt(any())).thenReturn(data.decryptResult());
 
-        Optional<String> secret = credStash.getSecret("table", "mysecret", new HashMap<>());
+        Optional<DecryptedSecret> decryptedSecretOptional =
+                credStash.getSecret(new SecretRequest(secretName).withTable(table));
 
-        Mockito.verify(dynamoDBClient, VerificationModeFactory.times(1)).query(Mockito.any(QueryRequest.class));
-        Assert.assertEquals("foo", secret.get());
+        DecryptedSecret decryptedSecret = decryptedSecretOptional.orElseThrow(RuntimeException::new);
+
+        verify(dynamoDBClient, times(1)).query(any());
+        assertEquals(secret, decryptedSecret.getSecret());
+        assertEquals(secretName, decryptedSecret.getName());
+        assertEquals(table, decryptedSecret.getTable());
+        assertEquals(padVersion(1), decryptedSecret.getVersion());
+    }
+
+    @Test
+    public void testGetSecret_missing() {
+
+        String secretName = "my_secret_name";
+        String table = "my_table";
+
+        when(dynamoDBClient.query(any())).thenReturn(new QueryResult().withCount(0));
+
+        assertFalse(credStash.getSecret(new SecretRequest(secretName).withTable(table)).isPresent());
     }
 
     @Test
     public void testGetSecretWithVersion() {
-        final GetItemRequest[] getItemRequest = new GetItemRequest[1];
-        Mockito.when(dynamoDBClient.getItem(Mockito.any(GetItemRequest.class))).thenAnswer(invocationOnMock -> {
-            Object[] args = invocationOnMock.getArguments();
-            getItemRequest[0] = (GetItemRequest) args[0];
-            return new GetItemResult();
-        });
 
-        CredStash credStash = Mockito.spy(new CredStash(dynamoDBClient, awskmsClient, new CredStashBouncyCastleCrypto()));
-        Mockito.doReturn(Optional.of("foo")).when(credStash).getStoredSecret(Mockito.any(StoredSecret.class), Mockito.any(Map.class));
+        String secret = "@#$ppoeert$%";
+        String secretName = "my_secret_name";
+        String table = "my_table";
 
-        credStash.getSecret("table", "mysecret", new HashMap<>(), padVersion(1));
+        MockCredStashData data = new MockCredStashData(secret, secretName, 1);
 
-        Mockito.verify(dynamoDBClient, VerificationModeFactory.times(1)).getItem(Mockito.any(GetItemRequest.class));
-        Assert.assertEquals(getItemRequest[0].getKey().get("version").getS(), padVersion(1));
+        when(dynamoDBClient.getItem(any())).thenReturn(data.getItemResult());
+        when(awskmsClient.decrypt(any())).thenReturn(data.decryptResult());
+
+        Optional<DecryptedSecret> decryptedSecretOptional =
+                credStash.getSecret(new SecretRequest(secretName)
+                        .withTable(table)
+                        .withVersion(1));
+
+        DecryptedSecret decryptedSecret = decryptedSecretOptional.orElseThrow(RuntimeException::new);
+
+        verify(dynamoDBClient, times(1)).getItem(any());
+        assertEquals(secret, decryptedSecret.getSecret());
+        assertEquals(secretName, decryptedSecret.getName());
+        assertEquals(table, decryptedSecret.getTable());
+        assertEquals(padVersion(1), decryptedSecret.getVersion());
+
     }
 
-    private String padVersion(int v) {
-        return String.format("%019d", v);
+    class MockCredStashData {
+
+        private final byte[] decryptedKey = new byte[64];
+        private final Map<String, AttributeValue> item;
+
+        QueryResult queryResult() {
+            QueryResult result = new QueryResult();
+            result.setItems(Collections.singletonList(item));
+            result.setCount(1);
+            result.setScannedCount(1);
+            return result;
+        }
+
+        GetItemResult getItemResult() {
+            GetItemResult result = new GetItemResult();
+            result.setItem(item);
+            return result;
+        }
+
+        DecryptResult decryptResult() {
+            DecryptResult result = new DecryptResult();
+            result.setPlaintext(ByteBuffer.wrap(decryptedKey));
+            return result;
+        }
+
+        MockCredStashData(String secret, String secretName, int version) {
+
+            // setup fake key values
+            byte[] keyBytes = "12121212121212121212121212121212".getBytes();
+            byte[] hmacKeyBytes = new byte[32];
+            System.arraycopy(keyBytes, 0, decryptedKey, 0, 32);
+            for (int i = 0; i < 32; i++) {
+                hmacKeyBytes[i] = (byte) i;
+                decryptedKey[i + 32] = (byte) i;
+            }
+
+            byte[] encryptedKeyBytes = new byte[] {1};
+
+            byte[] secretBytes = secret.getBytes();
+
+            // Credstash uses standard AES
+            BlockCipher engine = new AESEngine();
+
+            // Credstash uses CTR mode
+            StreamBlockCipher cipher = new SICBlockCipher(engine);
+
+            cipher.init(true, new ParametersWithIV(new KeyParameter(keyBytes), INITIALIZATION_VECTOR));
+
+            byte[] contents = new byte[secretBytes.length];
+            int contentsOffset = 0;
+            int resultOffset = 0;
+            cipher.processBytes(secretBytes, contentsOffset, contents.length, contents, resultOffset);
+            byte[] hmac = new CredStashBouncyCastleCrypto().digest(hmacKeyBytes, contents, Digests.SHA256);
+
+            item = new HashMap<>();
+            item.put(Keys.NAME, new AttributeValue(secretName));
+            item.put(Keys.VERSION, new AttributeValue(padVersion(version)));
+            item.put(Keys.KEY, new AttributeValue(new String(Base64.getEncoder().encode(encryptedKeyBytes))));
+            item.put(Keys.CONTENTS, new AttributeValue(new String(Base64.getEncoder().encode(contents))));
+            item.put(Keys.HMAC, new AttributeValue(new String(Hex.encodeHex(hmac))));
+            item.put(Keys.DIGEST, new AttributeValue(Digests.SHA256));
+        }
     }
 }

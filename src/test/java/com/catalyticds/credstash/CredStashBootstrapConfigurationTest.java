@@ -47,6 +47,12 @@ public class CredStashBootstrapConfigurationTest {
     @Value("${test.oneToOne}")
     String oneToOne;
 
+    @Value("${credstash__SOME_KEY}")
+    String defaultPrefixMatching1;
+
+    @Value("${credstash__some.key}")
+    String defaultPrefixMatching2;
+
     @Autowired
     CredStash credStash;
 
@@ -64,6 +70,8 @@ public class CredStashBootstrapConfigurationTest {
         assertEquals(MockCredStashConfiguration.credStashValue, fromValueAnnotation);
         assertEquals(MockCredStashConfiguration.credStashValue, fromValueAnnotationNoDefault);
         assertEquals(MockCredStashConfiguration.credStashValue, oneToOne);
+        assertEquals(MockCredStashConfiguration.credStashValue, defaultPrefixMatching1);
+        assertEquals(MockCredStashConfiguration.credStashValue, defaultPrefixMatching2);
     }
 
 }
