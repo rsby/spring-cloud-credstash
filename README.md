@@ -2,10 +2,7 @@
 A read-only Spring Cloud library for retrieving application
  properties from a CredStash store. As opposed to a Docker/container solution, Spring Cloud CredStash
  enables full Spring property, profile and Boot integration, reducing
- the friction for per-environment and local developer configuration. This maintains
-  the lightweight _right-click run_ Boot developer experience while reducing the Dev ops
-  configuration management effort and boiling the Dev Ops CredStash configuration down
-  to a single property or two at most.
+ the friction for per-environment and local developer configuration.
  
 ### Does it load all credentials from the CredStash store?
 No. Loading all properties requires table scanning permission in DynamoDB, and we elected not to require
@@ -18,54 +15,46 @@ secrets from a CredStash store is to add this library to your Spring Boot app an
 configure the following in your `bootstrap.yml` or `application.yml`:
 
     credstash:
-      enabled: true
-      table: test-store
-      properties:
-        - name: "**.secret"
-        - name: "spring.datasource.password"
-          key: 
-        - name: "test.from*"
-        - name: "test.oneToOne"
-          addPrefix:
-          key: one_to_one_secret_key
-        - name: "**.pass"
-        - name: "credstash__*"
-          stripPrefix: "credstash__"
-          context:
-            my-app: key
-        - name: "test.test"
-          enabled: false
-      enabled: true
-      table: "qa-credential-store"
-      matching:
-       - "auth.idp.client.secret"
-       - "spring.datasource.password"
+      enabled: true # the default is 'false' - it must be explicitly enabled
+      table: test-store # the default is 'credential-store'
 
 ### Simple use and configuration - single credential store with keys for environment or VPC
 
     credstash:
       enabled: true
-      add_prefix:   "dev_"
-      matching:
-       - "auth.idp.client.secret"
-       - "spring.datasource.password"
+      add_prefix:   "dev_" # this would be added to the crestash key names as a key prefix
+            
+This would then set the `my.secret` property to the value of the `MY_SECRET` credstash secret:
+    
+      my.secret=${credstash__MY_SECRET}
 
-
-### Further use and configuration
+### Adding context
 
     credstash:
       enabled:      true
-      table:        "test-store"
-      add_prefix:   "dev_"
-      strip_prefix: "credstash__"
-      matching:     "credstash__*"
       context:
         my-app: "my-context"
-      
-This config will trigger loading of Spring properties such as `credstash__user.svc.db.pass` and load them
-from CredStash using the key `dev_user.svc.db.pass`. The context is optional.
+               
+This would then match:
+    
+      my.secret=${credstash__MY_SECRET} # this then includes the declared context
+     
+### Sub-configs
 
-More about the settings:
+    credstash:
+      enabled: true
+      properties:
+        - name: "credstash_my_app__*.**"
+          stripPrefix: "credstash_my_app__"
+          context:
+            my-app: key
+            
+This would then match:
+    
+      my.secret=${credstash__MY_SECRET}
+      my.app.secret=${credstash_my_app__MY_APP_SECRET}
+
+### More about the settings
 
 - _enabled_: set to `false` by default, this must be set to `true` in order to retrieve properties
 from your CredStash store
@@ -76,37 +65,13 @@ property in different environments. Useful when using a single store across mult
 - _stripPrefix_: A string to strip from the original Spring property name when converting to a CredStash key.
 - _matching_: An Ant pattern for filtering which properties to fetch. 
 
-### Fine tuning
-The yaml config also supports setting "child" configs that will inherit from the main settings. For instance:
-
-    credstash:
-      enabled: true
-      addPrefix: "dev_"
-      stripPrefix: "credstash__"
-      matching: "credstash__*"
-      more:
-        user_service_pass:
-          matching: "credstash__user.svc.db.pass"
-          version: "2"
-        external_file_store_pass:
-          enabled: false
-          matching: "external.file.store.pass"
-
-In this config, most properties would be satisfied with the latest secret version in CredStash, but
-the user service DB password would still be on version 2. These "child" configs must all be part of the `more` field.
-Any field can be overridden in the child configs, except for `pathSeparator`, which can only be set in 
-the default config. For child configs, `enabled` defaults to true, but it can be set to false. This is useful
-if using a centralized `bootstrap.yml` across multiple micro services - child configs can be toggled on and
-off via environment variables, enabling ease of defining the `spring.datasource.password` per service in
-a centralized config and then only turning on the child config for a given service via its env args.
-
 ### All default settings
 
     credstash.enabled:          false                   # not enabled by default (except for "child" configs)
     credstash.table:            "credential-store"
     credstash.add_prefix:       ""
-    credstash.strip_prefix:     ""
-    credstash.matching:         ""                      # matches none
+    credstash.strip_prefix:     "credstash__"
+    credstash.matching:         "credstash__*.**"
     credstash.version:          null                    # null resolves to "latest"
     credstash.context:          null
     credstash.pathSeparator:    "."                     # separator for Ant matching
