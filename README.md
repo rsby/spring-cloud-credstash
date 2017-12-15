@@ -18,13 +18,17 @@ configure the following in your `bootstrap.yml` or `application.yml`:
       enabled: true # the default is 'false' - it must be explicitly enabled
       table: test-store # the default is 'credential-store'
 
+This would then set the `my.secret` property to the value of the `MY_SECRET` credstash secret:
+    
+      my.secret=${credstash__MY_SECRET}
+
 ### Simple use and configuration - single credential store with keys for environment or VPC
 
     credstash:
       enabled: true
       add_prefix:   "dev_" # this would be added to the crestash key names as a key prefix
             
-This would then set the `my.secret` property to the value of the `MY_SECRET` credstash secret:
+This would then set the `my.secret` property to the value of the `dev_MY_SECRET` credstash secret:
     
       my.secret=${credstash__MY_SECRET}
 
