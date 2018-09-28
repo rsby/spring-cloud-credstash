@@ -102,12 +102,9 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
         }
         audit("Missing " + propertyName + " using " + request + " built from " + config);
         if (mode == CredStashProperties.Mode.PROD) {
-            throw new CredStashPropertyMissingException(
+            logger.debug(String.format("Property [%s] not found using config [%s]",
                     propertyName,
-                    config,
-                    String.format("Property [%s] not found using config [%s]",
-                            propertyName,
-                            config));
+                    config));
         }
         return null;
     }
