@@ -26,12 +26,16 @@ public class SecretRequest {
     }
 
     public SecretRequest withVersion(String version) {
-        this.version = version;
+        if (version != null && !"".equals(version)) {
+            this.version = version;
+        }
         return this;
     }
 
     public SecretRequest withVersion(Integer version) {
-        this.version = CredStashStrings.padVersion(version);
+        if (version != null) {
+            this.version = CredStashStrings.padVersion(version);
+        }
         return this;
     }
 

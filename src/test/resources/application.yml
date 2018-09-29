@@ -6,3 +6,6 @@ test:
 
 credstash__test.path.key:
 my.exact.match: "not from credstash"
+
+try.override: not overridden
+

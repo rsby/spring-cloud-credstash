@@ -3,6 +3,9 @@ credstash:
   enabled: true
   table: test-store
   add-prefix: dev_
+  encryptor:
+    secret:
+      name: "encryptor_secret"
   matching:
     - "**.secret"
     - "my.exact.match"

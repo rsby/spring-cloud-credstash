@@ -2,6 +2,10 @@ package com.catalyticds.credstash;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.kms.AWSKMS;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.mockito.ArgumentMatcher;
+import org.mockito.Matchers;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -36,12 +40,35 @@ public class MockCredStashConfiguration {
 
     @PostConstruct
     public void init() {
-        when(credStash().getSecret(any()))
-                .thenReturn(Optional.of(new DecryptedSecret(
-                        "table",
-                        "name",
-                        "version",
-                        credStashValue)));
+        when(credStash().getSecret(argThat(new ArgumentMatcher<SecretRequest>() {
+            @Override
+            public boolean matches(Object item) {
+                return item != null && ((SecretRequest) item).getSecretName().toLowerCase().contains("missing");
+            }
+            @Override
+            public void describeMismatch(Object item, Description mismatchDescription) {
+            }
+            @Override
+            public void describeTo(Description description) {
+            }
+        }))).thenReturn(Optional.empty());
+
+        when(credStash().getSecret(argThat(new ArgumentMatcher<SecretRequest>() {
+            @Override
+            public boolean matches(Object item) {
+                return item != null && !((SecretRequest) item).getSecretName().toLowerCase().contains("missing");
+            }
+            @Override
+            public void describeMismatch(Object item, Description mismatchDescription) {
+            }
+            @Override
+            public void describeTo(Description description) {
+            }
+        }))).thenReturn(Optional.of(new DecryptedSecret(
+                "table",
+                "name",
+                "0",
+                credStashValue)));
     }
 
 }
