@@ -49,3 +49,22 @@ a centralized config and then only turning on the child config for a given servi
     credstash.version:          null                    # null resolves to "latest"
     credstash.context:          null
     credstash.mode:             PROD                    # can be set to AUDIT to log CredStash retrieval details
+
+# Text Encryptor
+
+The CredStashTextEncryptor enables versioned text encryption built on top of Spring's HexEncodingTextEncryptor.
+This can be used to implement the second layer of 2-layer encryption at rest (first layer being DB encryption) 
+or in transit (first layer being SSL/TLS). The encrypted values contain the version of the secret used to encrypt them, 
+such that the secret can be updated on a schedule, and the encryptor will use the latest version for encrypting yet 
+will still decrypt using the version used to previously encrypt values. It is also possible to specify a default 
+secret version other than latest. An example configuration in your `bootstrap.yml`:
+
+    credstash:
+      encryptor:
+        secret:
+          name: "encryptor_secret"
+          
+# Beans
+
+When enabled, the CredStash and CredStashTextEncryptor beans are available in the application context to be wired
+into your classes and used directly.

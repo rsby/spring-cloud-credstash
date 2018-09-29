@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -39,15 +40,6 @@ public class CredStashBootstrapConfiguration implements PropertySourceLocator {
 
     @Bean
     @ConditionalOnMissingBean
-    CredStash credStash() {
-        return new CredStash(
-                amazonDynamoDB(),
-                awskms(),
-                credStashCrypto());
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
     AmazonDynamoDB amazonDynamoDB() {
         return AmazonDynamoDBClientBuilder.defaultClient();
     }
@@ -64,9 +56,32 @@ public class CredStashBootstrapConfiguration implements PropertySourceLocator {
         return new CredStashBouncyCastleCrypto();
     }
 
+    @Bean
+    @ConditionalOnMissingBean
+    public CredStash credStash() {
+        return new CredStash(
+                amazonDynamoDB(),
+                awskms(),
+                credStashCrypto());
+    }
+
     @Override
     public PropertySource<?> locate(Environment environment) {
         return credStashPropertySource();
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "credstash", name = "encryptor.secret.name")
+    @ConditionalOnMissingBean
+    public CredStashTextEncryptor credStashTextEncryptor(
+            @Value("${credstash.encryptor.secret.name}") String secret,
+            @Value("${credstash.encryptor.secret.version:}") String version) {
+        return new CredStashTextEncryptor(
+                credStash(),
+                new SecretRequest(secret)
+                        .withTable(credStashProperties.getTable())
+                        .withVersion(version)
+        );
     }
 
 }

@@ -67,7 +67,7 @@ public class MockCredStashConfiguration {
         }))).thenReturn(Optional.of(new DecryptedSecret(
                 "table",
                 "name",
-                "version",
+                "0",
                 credStashValue)));
     }
 

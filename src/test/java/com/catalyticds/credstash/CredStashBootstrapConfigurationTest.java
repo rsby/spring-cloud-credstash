@@ -75,6 +75,9 @@ public class CredStashBootstrapConfigurationTest {
     @Autowired
     CredStashProperties properties;
 
+    @Autowired
+    CredStashTextEncryptor encryptor;
+
     @Test
     public void test() {
         assertEquals("test", test);
@@ -89,6 +92,9 @@ public class CredStashBootstrapConfigurationTest {
         assertEquals(MockCredStashConfiguration.credStashValue, defaultPrefixMatching1);
         assertEquals(MockCredStashConfiguration.credStashValue, defaultPrefixMatching2);
         assertEquals("default", defaultVal);
+        assertEquals(
+                "test",
+                encryptor.decrypt("0::b4ab1bff72df5a3d::547294a955fa5550cb6684afda85112be57c69f9a5d6d8009db622a3dcc6ca6d35b7e274"));
     }
 
 }
