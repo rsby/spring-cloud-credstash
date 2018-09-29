@@ -68,3 +68,7 @@ secret version other than latest. An example configuration in your `bootstrap.ym
 
 When enabled, the CredStash and CredStashTextEncryptor beans are available in the application context to be wired
 into your classes and used directly.
+
+# Building
+
+    ./gradlew build
