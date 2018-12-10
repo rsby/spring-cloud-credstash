@@ -94,7 +94,12 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
                 .withVersion(config.getVersion())
                 .withContext(config.getContext());
         logger.debug("Retrieving property [" + propertyName + "] with request [" + request + "]");
-        secret = source.getSecret(request);
+        try {
+            secret = source.getSecret(request);
+        } catch (Exception e) {
+            logger.error("Failed retrieving secret " + request, e);
+            secret = Optional.empty();
+        }
         cache.put(propertyName, secret);
         if (secret.isPresent()) {
             audit("Found " + propertyName + " using " + request + " built from " + config);
