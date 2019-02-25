@@ -22,3 +22,8 @@ credstash:
       enabled: false
       matching:
         - "test.test"
+  sources:
+    - secret_name: "test_source"
+      required: true
+    - secret_name: "missing_test_source"
+      required: false
