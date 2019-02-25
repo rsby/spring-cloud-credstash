@@ -4,11 +4,6 @@ A read-only Spring Cloud library for retrieving application
  enables full Spring property, profile and Boot integration, reducing
  the friction for per-environment and local developer configuration.
  
-### Does it load all credentials from the CredStash store?
-No. Loading all properties requires table scanning permission in DynamoDB, and we elected not to require
-that permission. However, some properties, such as `spring.datasource.password`, may need to be enumerated in order
-to be set. In those cases, explicitly listing the property in the yaml config (shown below) will suffice. 
- 
 ### Basic use and configuration
 As a Spring Cloud bootstrap component, all that is required to begin retrieving
 secrets from a CredStash store is to add this library to your Spring Boot app and
@@ -21,8 +16,24 @@ configure the following in your `bootstrap.yml` or `application.yml`:
 This would then set the `my.secret` property to the value of the `MY_SECRET` credstash secret:
     
       my.secret=${credstash__MY_SECRET}
+      
+### CredStash YAML Property source
+Not all properties are secrets. This library makes it possible to use CredStash as a configuration server,
+loading external YAML configuration from CredStash:
 
-### Simple use and configuration - single credential store with keys for environment or VPC
+    credstash:
+      enabled: true
+      sources:
+        - my_yaml_properties
+        
+With the above config, the "my_yaml_properties" will be parsed as a Spring YAML property source.
+      
+### Does it load all credentials from the CredStash store?
+No. Loading all properties requires table scanning permission in DynamoDB, and we elected not to require
+that permission. However, some properties, such as `spring.datasource.password`, may need to be enumerated in order
+to be set. In those cases, explicitly listing the property in the yaml config (shown below) will suffice. 
+
+### Single credential store with keys for environment or VPC
 
     credstash:
       enabled: true

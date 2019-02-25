@@ -53,6 +53,9 @@ public class CredStashBootstrapConfigurationTest {
     @Value("${credstash__some.key}")
     String defaultPrefixMatching2;
 
+    @Value("${test.test.test}")
+    String fromPropertySource;
+
     @Autowired
     CredStash credStash;
 
@@ -72,6 +75,7 @@ public class CredStashBootstrapConfigurationTest {
         assertEquals(MockCredStashConfiguration.credStashValue, oneToOne);
         assertEquals(MockCredStashConfiguration.credStashValue, defaultPrefixMatching1);
         assertEquals(MockCredStashConfiguration.credStashValue, defaultPrefixMatching2);
+        assertEquals("from_property_source", fromPropertySource);
     }
 
 }

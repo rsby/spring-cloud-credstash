@@ -2,9 +2,12 @@ package com.catalyticds.credstash;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.kms.AWSKMS;
+import com.amazonaws.util.IOUtils;
+import org.mockito.stubbing.Answer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ClassPathResource;
 
 import javax.annotation.PostConstruct;
 
@@ -36,12 +39,21 @@ public class MockCredStashConfiguration {
 
     @PostConstruct
     public void init() {
-        when(credStash().getSecret(any()))
-                .thenReturn(Optional.of(new DecryptedSecret(
-                        "table",
-                        "name",
-                        "version",
-                        credStashValue)));
+        when(credStash().getSecret(any())).thenAnswer((Answer<Optional<DecryptedSecret>>) invocation -> {
+            Object[] args = invocation.getArguments();
+            SecretRequest request = (SecretRequest) args[0];
+            String secret = credStashValue;
+            if (request.getSecretName().equals("test_source")) {
+                 secret = IOUtils.toString(new ClassPathResource("from_credstash.yaml").getInputStream());
+            } else if (request.getSecretName().equals("missing_test_source")) {
+                return Optional.empty();
+            }
+            return Optional.of(new DecryptedSecret(
+                    request.getTable(),
+                    request.getSecretName(),
+                    String.valueOf(request.getVersion()),
+                    secret));
+        });
     }
 
 }
