@@ -20,6 +20,7 @@ public class CredStashPropertyConfig {
     private String table;
     private String version;
     private Map<String, String> context;
+    private List<SecretPropertySourceConfig> sources = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -87,6 +88,10 @@ public class CredStashPropertyConfig {
 
     public void setContext(Map<String, String> context) {
         this.context = context;
+    }
+
+    public List<SecretPropertySourceConfig> getSources() {
+        return sources;
     }
 
     public CredStashPropertyConfig withDefaults(String name, CredStashPropertyConfig defaults) {

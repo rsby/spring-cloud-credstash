@@ -11,9 +11,13 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cloud.bootstrap.config.PropertySourceLocator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.CompositePropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
 import org.springframework.util.AntPathMatcher;
+
+import java.util.List;
+
 
 /**
  * @author reesbyars on 9/22/17.
@@ -24,17 +28,20 @@ import org.springframework.util.AntPathMatcher;
 public class CredStashBootstrapConfiguration implements PropertySourceLocator {
 
     private final CredStashProperties credStashProperties;
+    private final List<CredStashPropertyConfig> credStashPropertyConfigs;
 
     CredStashBootstrapConfiguration(
             CredStashProperties credStashProperties) {
         this.credStashProperties = credStashProperties;
+        this.credStashPropertyConfigs = credStashProperties.compileToOrderedList();
     }
 
     @Bean
     PropertySource<CredStash> credStashPropertySource() {
         return new CredStashPropertySource(
                 credStash(),
-                credStashProperties,
+                credStashPropertyConfigs,
+                credStashProperties.getMode(),
                 new AntPathMatcher(credStashProperties.getPathSeparator()));
     }
 
@@ -82,6 +89,17 @@ public class CredStashBootstrapConfiguration implements PropertySourceLocator {
                         .withTable(credStashProperties.getTable())
                         .withVersion(version)
         );
+    }
+
+    @Bean
+    PropertySourceLocator secretPropertySources() {
+        CompositePropertySource propertySource = new CompositePropertySource("secret_property_sources");
+        for (CredStashPropertyConfig propertyConfig : credStashPropertyConfigs) {
+            for (SecretPropertySourceConfig sourceConfig : propertyConfig.getSources()) {
+                propertySource.addPropertySource(new SecretPropertySource(credStash(), propertyConfig, sourceConfig));
+            }
+        }
+        return environment -> propertySource;
     }
 
 }

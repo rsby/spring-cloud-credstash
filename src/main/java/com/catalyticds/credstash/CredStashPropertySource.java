@@ -29,12 +29,13 @@ class CredStashPropertySource extends EnumerablePropertySource<CredStash> {
 
     CredStashPropertySource(
             CredStash credStash,
-            CredStashProperties credStashProperties,
+            List<CredStashPropertyConfig> propertyConfigs,
+            CredStashProperties.Mode mode,
             PathMatcher propertyMatcher) {
         super("credstash", credStash);
-        this.propertyConfigs = credStashProperties.compileToOrderedList();
+        this.propertyConfigs = propertyConfigs;
+        this.mode = mode;
         this.propertyMatcher = propertyMatcher;
-        this.mode = credStashProperties.getMode();
         this.enumerableProperties = getEnumerableProperties();
     }
 

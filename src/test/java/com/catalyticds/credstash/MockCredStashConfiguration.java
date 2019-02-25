@@ -2,13 +2,12 @@ package com.catalyticds.credstash;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.kms.AWSKMS;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.mockito.ArgumentMatcher;
-import org.mockito.Matchers;
+import com.amazonaws.util.IOUtils;
+import org.mockito.stubbing.Answer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ClassPathResource;
 
 import javax.annotation.PostConstruct;
 
@@ -40,35 +39,21 @@ public class MockCredStashConfiguration {
 
     @PostConstruct
     public void init() {
-        when(credStash().getSecret(argThat(new ArgumentMatcher<SecretRequest>() {
-            @Override
-            public boolean matches(Object item) {
-                return item != null && ((SecretRequest) item).getSecretName().toLowerCase().contains("missing");
+        when(credStash().getSecret(any())).thenAnswer((Answer<Optional<DecryptedSecret>>) invocation -> {
+            Object[] args = invocation.getArguments();
+            SecretRequest request = (SecretRequest) args[0];
+            String secret = credStashValue;
+            if (request.getSecretName().equals("test_source")) {
+                secret = IOUtils.toString(new ClassPathResource("from_credstash.yaml").getInputStream());
+            } else if (request.getSecretName().equals("missing_test_source")) {
+                return Optional.empty();
             }
-            @Override
-            public void describeMismatch(Object item, Description mismatchDescription) {
-            }
-            @Override
-            public void describeTo(Description description) {
-            }
-        }))).thenReturn(Optional.empty());
-
-        when(credStash().getSecret(argThat(new ArgumentMatcher<SecretRequest>() {
-            @Override
-            public boolean matches(Object item) {
-                return item != null && !((SecretRequest) item).getSecretName().toLowerCase().contains("missing");
-            }
-            @Override
-            public void describeMismatch(Object item, Description mismatchDescription) {
-            }
-            @Override
-            public void describeTo(Description description) {
-            }
-        }))).thenReturn(Optional.of(new DecryptedSecret(
-                "table",
-                "name",
-                "0",
-                credStashValue)));
+            return Optional.of(new DecryptedSecret(
+                    request.getTable(),
+                    request.getSecretName(),
+                    String.valueOf(request.getVersion()),
+                    secret));
+        });
     }
 
 }

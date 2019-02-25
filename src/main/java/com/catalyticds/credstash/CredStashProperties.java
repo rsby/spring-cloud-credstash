@@ -52,6 +52,7 @@ class CredStashProperties extends CredStashPropertyConfig {
         defaultConfig.getMatching().addAll(getMatching());
         defaultConfig.getMatching().add(new PropertyEntry("credstash__*.**"));
         defaultConfig.setStripPrefix("credstash__");
+        defaultConfig.getSources().addAll(getSources());
         properties.put("default", defaultConfig);
         return properties.entrySet().stream()
                 .map(p -> p.getValue().withDefaults(p.getKey(), this))

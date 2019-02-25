@@ -15,6 +15,17 @@ configure the following in your `bootstrap.yml` or `application.yml`:
     credstash:
       enabled: true
       table: "qa-credential-store"
+      
+### CredStash YAML Property source
+Not all properties are secrets. This library makes it possible to use CredStash as a configuration server,
+loading external YAML configuration from CredStash:
+
+    credstash:
+      enabled: true
+      sources:
+        - my_yaml_properties
+        
+With the above config, the "my_yaml_properties" will be parsed as a Spring YAML property source.
 
 ### More complex use cases
 The yaml config also supports setting "child" configs that will inherit from the main settings. For instance:
