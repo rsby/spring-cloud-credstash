@@ -45,13 +45,13 @@ public class MockCredStashConfiguration {
             String secret = credStashValue;
             if (request.getSecretName().equals("test_source")) {
                 secret = IOUtils.toString(new ClassPathResource("from_credstash.yaml").getInputStream());
-            } else if (request.getSecretName().equals("missing_test_source")) {
+            } else if (request.getSecretName().toLowerCase().contains("missing")) {
                 return Optional.empty();
             }
             return Optional.of(new DecryptedSecret(
                     request.getTable(),
                     request.getSecretName(),
-                    String.valueOf(request.getVersion()),
+                    request.getVersion().orElse("0"),
                     secret));
         });
     }
