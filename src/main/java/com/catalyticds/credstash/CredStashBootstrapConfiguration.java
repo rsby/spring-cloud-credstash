@@ -1,8 +1,6 @@
 package com.catalyticds.credstash;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -48,18 +46,6 @@ public class CredStashBootstrapConfiguration implements PropertySourceLocator {
 
     @Bean
     @ConditionalOnMissingBean
-    AmazonDynamoDB amazonDynamoDB() {
-        return AmazonDynamoDBClientBuilder.defaultClient();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    AWSKMS awskms() {
-        return AWSKMSClientBuilder.defaultClient();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
     CredStashCrypto credStashCrypto() {
         return new CredStashBouncyCastleCrypto();
     }
@@ -68,8 +54,8 @@ public class CredStashBootstrapConfiguration implements PropertySourceLocator {
     @ConditionalOnMissingBean
     public CredStash credStash() {
         return new CredStash(
-                amazonDynamoDB(),
-                awskms(),
+                AmazonDynamoDBClientBuilder.defaultClient(),
+                AWSKMSClientBuilder.defaultClient(),
                 credStashCrypto());
     }
 
