@@ -2,9 +2,7 @@
 buildscript {
     repositories {
         mavenCentral()
-        maven {
-            url "${artifactory_url}/artifactory/jcenter/"
-        }
+        jcenter()
     }
     dependencies {
         classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"
@@ -14,9 +12,6 @@ buildscript {
 
 repositories {
     mavenCentral()
-    maven {
-        url "${artifactory_url}/artifactory/jcenter/"
-    }
 }
 
 apply plugin: 'com.jfrog.artifactory'
